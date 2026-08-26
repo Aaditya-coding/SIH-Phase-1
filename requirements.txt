@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+requests
+python-dotenv
+sentence-transformers
+faiss-cpu
+paddleocr
+paddlepaddle
+streamlit

@@ -1,0 +1,1 @@
+# Implement extract_text_from_image(image_path) using PaddleOCR to parse text from notices or screenshots so it can be passed into extract_claims().
