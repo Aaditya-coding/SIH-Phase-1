@@ -1,23 +1,56 @@
-# Implement verify_claim(claim, ranked_evidence) with an LLM prompt that strictly checks the claim against the provided evidence and outputs verdict, confidence, and reason.
+import json
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
+
 def verify_claim(claim: str, evidence: list) -> dict:
-    """
-    Evaluates the claim against supplied evidence.
-    Returns: verdict, confidence, and reason.
-    """
-    # Baseline heuristic rule for Day 1 MVP validation
-    suspicious_keywords = ["10,000", "free", "miracle", "cures", "whatsapp", "guaranteed"]
-    
-    is_suspicious = any(word.lower() in claim.lower() for word in suspicious_keywords)
-    
-    if is_suspicious:
-        return {
-            "verdict": "REFUTED",
-            "confidence": 0.89,
-            "reason": "Available evidence and pattern indicators contradict the validity of this viral claim."
+    if not evidence:
+        return{
+            "verdict": "INSUFFICIENT_EVIDENCE",
+            "confidence": 0.0,
+            "reason": "No verifiable external reports were found for this statement."
         }
-    
-    return {
-        "verdict": "SUPPORTED",
-        "confidence": 0.82,
-        "reason": "Retrieved reports align with the statement."
-    }
+
+    evidence_text = "\n".join(
+        [f"- [{doc.get('source')}] {doc.get('title')}: {doc.get('snippet')}" for doc in evidence]
+    )
+
+    prompt = f"""
+You are an unbiased fact-checking verifier.
+Analyze the Claim against the provided Evidence ONLY. Do not rely on external assumptions or prior training biases.
+
+Claim: "{claim}"
+
+Evidence:
+{evidence_text}
+
+Task: 
+Determine if the claim is SUPPORTED, REFUTED, CONFLICTING, or INSUFFICIENT_EVIDENCE based strictly on the evidence above.
+Return strictly valid JSON with this format: 
+{{
+    "verdict": "SUPPORTED" | "REFUTED" | "CONFLICTING" | "INSUFFICIENT_EVIDENCE",
+    "confidence": <float between 0.0 and 1.0>,
+    "reason": "<1-2 sentence explanation citing the evidence>"
+}}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a factual verification assistant. Always respond with valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0
+        )
+        return json.loads(response.choice[0].message.content)
+    except Exception as e:
+        return {
+            "verdict": "INSUFFICIENT_EVIDENCE",
+            "confidence": 0.5,
+            "reason": f"Verification model error: {str(e)}"
+        }
