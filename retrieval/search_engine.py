@@ -1,33 +1,29 @@
-# Implement search_claim(claim) using a search API (e.g., Tavily, SerpAPI, or DuckDuckGo) to fetch 5–10 results with title, url, snippet, and source tags (OFFICIAL, NEWS, FACT_CHECK, UNKNOWN).
-import requests
+from ddgs import DDGS
 
-def search_claim(claim: str) -> list:
-    """
-    Queries web search and returns 5-10 evidence results with source tags.
-    Using DuckDuckGo Instant Answer / HTML endpoint for zero-key Day 1 setup.
-    """
+def search_claim(claim: str, max_results: int = 5) -> list:
+    """Fetches real search snippets categorized by domain source."""
     results = []
     try:
-        url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(claim)}"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        resp = requests.get(url, headers=headers, timeout=5)
-        
-        # Simple extraction or fallback evidence structure
-        results.append({
-            "title": f"Web search results for: {claim[:40]}...",
-            "url": "https://news.google.com",
-            "snippet": f"Top retrieved reports and official statements regarding: {claim}",
-            "source": "NEWS"
-        })
-    except Exception:
-        pass
+        with DDGS() as ddgs:
+            raw_results = list(ddgs.text(claim, max_results=max_results))
+            for r in raw_results:
+                url = r.get("href", "")
+                
+                source_type = "UNKNOWN"
+                if any(ext in url for ext in [".gov", ".nic.in", ".org"]):
+                    source_type = "OFFICIAL"
+                elif any(chk in url for chk in ["boomlive.in", "altnews.in", "snopes.com", "pib.gov"]):
+                    source_type = "FACT_CHECK"
+                elif any(media in url for media in ["ndtv.com", "thehindu.com", "bbc.com", "reuters.com"]):
+                    source_type = "NEWS"
 
-    if not results:
-        results.append({
-            "title": "Public Information Record",
-            "url": "https://gov.in",
-            "snippet": "No direct official notice found matching the exact query.",
-            "source": "UNKNOWN"
-        })
+                results.append({
+                    "title": r.get("title", ""),
+                    "url": url,
+                    "snippet": r.get("body", ""),
+                    "source": source_type
+                })
+    except Exception as e:
+        print(f"Search error: {e}")
         
     return results
