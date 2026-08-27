@@ -3,18 +3,19 @@
 from PIL import Image
 import pytesseract
 import io
+import os
+
+tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+if os.path.exists(tesseract_path):
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
 def extract_text_from_image(image_input) -> str:
     try:
-        if isinstance(image_input, (str, bytes)):
-            img = Image.open(image_input)
-        elif isinstance(image_input, io.BytesIO) or hasattr(image_input, "read"):
-            img = Image.open(image_input)
-        elif isinstance(image_input, Image.Image):
+        if isinstance(image_input, Image.Image):
             img = image_input
         else:
-            return ""  
-
+            img = Image.open(image_input)
+            
         extracted_text = pytesseract.image_to_string(img)
         return extracted_text.strip()
     except Exception as e:
