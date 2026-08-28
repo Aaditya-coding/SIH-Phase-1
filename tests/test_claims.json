@@ -1,17 +1,22 @@
 [
-    {
-        "id": 1,
-        "input": "Government has announced a 10,000 monthly scholarship for all college students.",
-        "expected_verdict": "REFUTED"
-    },
-    {
-        "id": 2,
-        "input": "ISRO successfully launched the Chandrayaan-3 lunar mission.",
-        "expected_verdict": "SUPPORTED"
-    },
-    {
-        "id": 3,
-        "input": "Drinking boiled garlic water cures COVID-19 within 24 hours.",
-        "expected_verdict": "REFUTED"
-    }
+  {
+    "claim": "Government has announced a 10,000 monthly scholarship for all college students.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "ISRO successfully launches its earth observation satellite EOS-08 aboard the SSLV-D3 rocket.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "RBI announces that Rs 500 currency notes with the green strip near the Governor signature are fake.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "Reserve Bank of India keeps the repo rate unchanged at 6.5 percent in its Monetary Policy Committee meeting.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Aliens have officially landed in New Delhi according to local news footage.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  }
 ]
