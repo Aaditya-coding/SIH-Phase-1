@@ -6,29 +6,30 @@ import os
 import json
 import datetime
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from multimodal.ocr_reader import extract_text_from_image
 
 st.set_page_config(page_title="Truth Intelligence", layout="centered")
 st.title("AI Fake News & Misinformation Verifier")
 
-input_mode = st.radio("Choose Input Mode:", ["Direct Text Input", "Upload Image / Screenshot"], horizontal=True)
+input_mode = st.radio("Choose Input Mode:", ["Direct Text Input", "Upload Image / Screenshot"], horizontal=True, key="input_mode_selector")
 user_claim = ""
 
 if input_mode == "Direct Text Input":
-    user_claim = st.text_area("Enter suspicious statement or news claim:", height=120)
+    user_claim = st.text_area("Enter suspicious statement or news claim:", height=120, key="direct_text_input")
 else:
-    uploaded_file = st.file_uploader("Upload image (e.g., WhatsApp notice, screenshot, circular):", type=["png", "jpg", "jpeg"]) 
+    uploaded_file = st.file_uploader("Upload image (e.g., WhatsApp notice, screenshot, circular):", type=["png", "jpg", "jpeg"], key="image_uploader_file") 
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Image Preview", use_container_width = True)
         with st.spinner("Extracting text via OCR..."):
             extracted = extract_text_from_image(uploaded_file)
         if extracted:
-            user_claim = st.text_area("Extracted Text (You can edit before verifying):", value=extracted, height=120)
+            user_claim = st.text_area("Extracted Text (You can edit before verifying):", value=extracted, height=120, key="ocr_extracted_text_area")
         else:
             st.warning("No readable text detected in this image. You can type the claim manually below.")
-            user_claim = st.text_area("Enter claim manually:", height=100)  
+            user_claim = st.text_area("Enter claim manually:", height=100, key="ocr_manual_fallback_text_area")  
 
 if st.button("Verify Claim", type="primary"):
     if not user_claim or not user_claim.strip():

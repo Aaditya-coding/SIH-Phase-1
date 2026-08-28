@@ -1,22 +1,82 @@
 [
   {
-    "claim": "Government has announced a 10,000 monthly scholarship for all college students.",
-    "expected_verdict": "REFUTED"
-  },
-  {
-    "claim": "ISRO successfully launches its earth observation satellite EOS-08 aboard the SSLV-D3 rocket.",
+    "claim": "The Reserve Bank of India (RBI) regulates the issuance of bank notes in India.",
     "expected_verdict": "SUPPORTED"
   },
   {
-    "claim": "RBI announces that Rs 500 currency notes with the green strip near the Governor signature are fake.",
-    "expected_verdict": "REFUTED"
-  },
-  {
-    "claim": "Reserve Bank of India keeps the repo rate unchanged at 6.5 percent in its Monetary Policy Committee meeting.",
+    "claim": "Python is a high-level, interpreted programming language created by Guido van Rossum.",
     "expected_verdict": "SUPPORTED"
   },
   {
-    "claim": "Aliens have officially landed in New Delhi according to local news footage.",
+    "claim": "The Taj Mahal is located on the right bank of the Yamuna river in Agra, India.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Photosynthesis is the process used by plants to convert light energy into chemical energy.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "The Earth completes one full rotation on its axis approximately every 24 hours.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "NASA confirmed that planet Earth will experience 15 days of complete darkness next month.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "Eating raw garlic on an empty stomach cures diabetes permanently within a week.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "The Great Wall of China is the only man-made object visible from the Moon with the naked eye.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "Lightning never strikes the same place twice.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "Goldfish have a memory span of only three seconds.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A secret underground city was discovered beneath New Delhi railway station yesterday.",
     "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Local scientist Dr. Alok Sharma invented a device that turns plastic waste into pure drinking water instantly at home.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Global tech companies have agreed to make all smartphones completely free starting next year.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "The ancient kingdom of Atlantis was recently found floating off the coast of Mumbai.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "A newly discovered species of blue tigers has been spotted roaming through urban neighborhoods in Central India.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Water freezes at 0 degrees Celsius (32 degrees Fahrenheit) at standard atmospheric pressure.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Albert Einstein won his Nobel Prize in Physics for his theory of general relativity.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "The municipal corporation of a small town in UP announced a free luxury electric car for every household.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "The human brain stops growing and developing entirely by the age of five.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "The capital city of Australia is Canberra.",
+    "expected_verdict": "SUPPORTED"
   }
 ]
