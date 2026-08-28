@@ -3,6 +3,8 @@ import requests
 from PIL import Image
 import sys
 import os
+import json
+import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from multimodal.ocr_reader import extract_text_from_image
@@ -74,7 +76,54 @@ if st.button("Verify Claim", type="primary"):
                             st.caption(snippet)
                     else:
                         st.write("No external evidence links returned.")
+
+                    # --- PHASE 3 / PHASE 4: REPORT EXPORTING FEATURE ---
+                    st.divider()
+                    st.subheader("Export Verification Report")
+                    
+                    # Prepare report content structures
+                    report_data = {
+                        "timestamp": datetime.datetime.now().isoformat(),
+                        "claim": user_claim.strip(),
+                        "verdict": verdict,
+                        "confidence_score": f"{confidence_pct}%",
+                        "explanation": data.get('reason'),
+                        "evidence_sources": evidence_list
+                    }
+
+                    # Format as clean Markdown text block for easy reading/downloading
+                    md_lines = [
+                        "# Truth Intelligence - Verification Report",
+                        f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                        f"**Claim:** {user_claim.strip()}",
+                        f"**Verdict:** {verdict}",
+                        f"**Confidence Score:** {confidence_pct}%",
+                        f"\n## Explanation\n{data.get('reason')}",
+                        "\n## Retrieved Sources"
+                    ]
+                    for idx, item in enumerate(evidence_list, start=1):
+                        md_lines.append(f"{idx}. **[{item.get('source', 'UNKNOWN')}]** [{item.get('title', 'Link')}]({item.get('url', '#')})")
+                        md_lines.append(f"   > {item.get('snippet', '')}")
+                    
+                    markdown_report = "\n".join(md_lines)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            label="Download as JSON",
+                            data=json.dumps(report_data, indent=4),
+                            file_name=f"verification_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                            mime="application/json"
+                        )
+                    with col2:
+                        st.download_button(
+                            label="Download as Markdown",
+                            data=markdown_report,
+                            file_name=f"verification_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                            mime="text/markdown"
+                        )
+
                 else:
                     st.error(f"API returned error status code: {response.status_code}")
             except Exception as e:
-                st.error(f"Failed to connect to backend server: {e}")                                                            
+                st.error(f"Failed to connect to backend server: {e}")
