@@ -3,8 +3,10 @@ uvicorn
 pydantic
 requests
 python-dotenv
+duckduckgo-search
 sentence-transformers
 faiss-cpu
-paddleocr
-paddlepaddle
+openai
+pytesseract
+pillow
 streamlit

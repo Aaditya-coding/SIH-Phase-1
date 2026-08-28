@@ -47,7 +47,7 @@ Return strictly valid JSON with this format:
             response_format={"type": "json_object"},
             temperature=0.0
         )
-        return json.loads(response.choice[0].message.content)
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
         return {
             "verdict": "INSUFFICIENT_EVIDENCE",
