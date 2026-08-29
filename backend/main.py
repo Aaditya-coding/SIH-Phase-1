@@ -3,6 +3,17 @@ from pydantic import BaseModel
 import sys
 import os
 
+#validation safeguard
+from dotenv import load
+
+load_dotenv()
+
+def validate_environment():
+    if not os.getenv("OPENAI_API_KEY"):
+        print("WARNING: OPENAI_API_KEY is not set in environment variables.")
+
+validate_environment()
+
 # Ensure modules are discoverable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
