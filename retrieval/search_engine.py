@@ -1,5 +1,5 @@
 from functools import lru_cache
-from duckduckgo_search import DDGS  # duckduckgo_search exports DDGS
+from ddgs import DDGS  # duckduckgo_search exports DDGS
 
 @lru_cache(maxsize=100)
 def search_claim(claim: str, max_results: int = 5) -> tuple:
@@ -7,7 +7,7 @@ def search_claim(claim: str, max_results: int = 5) -> tuple:
     results = []
     try:
         with DDGS() as ddgs:
-            raw_results = list(ddgs.text(claim, max_results=max_results))
+            raw_results = list(ddgs.text(claim, max_results=max_results, backend="auto"))
             for r in raw_results:
                 url = r.get("href", "")
                 

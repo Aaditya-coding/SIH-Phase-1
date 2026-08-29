@@ -1,0 +1,5 @@
+# backend api
+	py -m uvicorn backend.main:app --reload --reload-dir backend --port 8000
+
+# frontend
+	py -m streamlit run frontend/app.py

@@ -4,7 +4,7 @@ import sys
 import os
 
 #validation safeguard
-from dotenv import load
+from dotenv import load_dotenv
 
 load_dotenv()
 

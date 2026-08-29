@@ -87,9 +87,9 @@ if st.button("Verify Claim", type="primary"):
                         snippet = item.get("snippet", "No preview available.")
                         score = item.get("similarity_score", None)
 
-                            score_str = f" | *Relevance Score: {score}*" if score is not None else ""
-                            st.markdown(f"**{idx}. [{source_tag}]** [{title}]({url}){score_str}")
-                            st.caption(snippet)
+                        score_str = f" | *Relevance Score: {score}*" if score is not None else ""
+                        st.markdown(f"**{idx}. [{source_tag}]** [{title}]({url}){score_str}")
+                        st.caption(snippet)
                     else:
                         st.write("No external evidence links returned.")
 
