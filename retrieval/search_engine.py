@@ -1,7 +1,9 @@
-from ddgs import DDGS
+from functools import lru_cache
+from duckduckgo_search import DDGS  # duckduckgo_search exports DDGS
 
-def search_claim(claim: str, max_results: int = 5) -> list:
-    """Fetches real search snippets categorized by domain source."""
+@lru_cache(maxsize=100)
+def search_claim(claim: str, max_results: int = 5) -> tuple:
+    """Fetches real search snippets categorized by domain source with LRU caching."""
     results = []
     try:
         with DDGS() as ddgs:
@@ -9,13 +11,16 @@ def search_claim(claim: str, max_results: int = 5) -> list:
             for r in raw_results:
                 url = r.get("href", "")
                 
-                source_type = "UNKNOWN"
-                if any(ext in url for ext in [".gov", ".nic.in", ".org"]):
-                    source_type = "OFFICIAL"
-                elif any(chk in url for chk in ["boomlive.in", "altnews.in", "snopes.com", "pib.gov"]):
+                # Logic order fix: FACT_CHECK should be evaluated first, as some 
+                # fact-checkers like pib.gov contain '.gov' (which would otherwise match OFFICIAL first)
+                if any(chk in url for chk in ["boomlive.in", "altnews.in", "snopes.com", "pib.gov"]):
                     source_type = "FACT_CHECK"
+                elif any(ext in url for ext in [".gov", ".nic.in", ".org"]):
+                    source_type = "OFFICIAL"
                 elif any(media in url for media in ["ndtv.com", "thehindu.com", "bbc.com", "reuters.com"]):
                     source_type = "NEWS"
+                else:
+                    source_type = "UNKNOWN"
 
                 results.append({
                     "title": r.get("title", ""),
@@ -26,4 +31,9 @@ def search_claim(claim: str, max_results: int = 5) -> list:
     except Exception as e:
         print(f"Search error: {e}")
         
-    return results
+    # Convert list to tuple to ensure the return type is immutable
+    return tuple(results)
+
+def clear_search_cache():
+    """Utility function to clear the search cache manually."""
+    search_claim.cache_clear()
