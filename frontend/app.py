@@ -5,6 +5,31 @@ import sys
 import os
 import json
 import datetime
+import time
+
+BACKEND_URL = "http://localhost:8000"
+
+
+def check_backend():
+  try:
+    response = requests.get(f"{BACKEND_URL}/health")
+    return response.status_code == 200
+  except requests.exceptions.ConnectionError:
+    return False
+
+if "backend_ready" not in st.session_state:
+  st.session_state.backend_ready = False
+
+if not st.session_state.backend_ready:
+  with st.spinner(
+      "Tu!! Haan Tu BSDK whi aake maarunga!..."
+  ):
+    while not check_backend():
+      time.sleep(1)
+    st.session_state.backend_ready = True
+    st.rerun()
+
+st.title("Truth Intelligence - Fake News Detection")
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
