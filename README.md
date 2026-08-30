@@ -70,4 +70,9 @@ TRUTH-INTELLIGENCE/
 ## ⚙️ Quick Start
 1. Clone the repository and install requirements:
    ```bash
+   git clone https://github.com/Aaditya-coding/SIH-Phase-1
+   cd SIH-Phase-1
    pip install -r requirements.txt
+   ```
+2. Then open the "Truth_Intelligence.bat" file to execute the program
+```
