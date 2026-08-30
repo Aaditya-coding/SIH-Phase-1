@@ -22,7 +22,7 @@ if "backend_ready" not in st.session_state:
 
 if not st.session_state.backend_ready:
   with st.spinner(
-      "Tu!! Haan Tu BSDK whi aake maarunga!..."
+      "Tu!! Haan Tu BSDK whi aake maarunga!...backend load hone de!!!"
   ):
     while not check_backend():
       time.sleep(1)
