@@ -65,3 +65,7 @@ TRUTH-INTELLIGENCE/
 ├── requirements.txt         # Python package dependencies
 └── Truth_Intelligence.bat   # Windows one-click app launcher
 
+## ⚙️ Quick Start
+1. Clone the repository and install requirements:
+   ```bash
+   pip install -r requirements.txt
