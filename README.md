@@ -75,4 +75,3 @@ TRUTH-INTELLIGENCE/
    pip install -r requirements.txt
    ```
 2. Then open the "Truth_Intelligence.bat" file to execute the program
-```
