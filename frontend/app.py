@@ -5,10 +5,19 @@ import sys
 import os
 import json
 import datetime
+import uuid
 
-
+# Set up paths to access backend and multimodal modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from multimodal.ocr_reader import extract_text_from_image
+
+# --- NEW IMPORTS FOR PHASE 2 & 3 ---
+from backend.security.audit_logger import CryptographicAuditLogger
+from frontend.components.charts import (
+    render_velocity_curve,
+    render_source_distribution,
+    render_narrative_graph
+)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -28,8 +37,8 @@ def fetch_verification_cached(claim_text: str) -> dict:
         raise RuntimeError(f"API returned error status code: {response.status_code}")
 
 
-st.set_page_config(page_title="Truth Intelligence", layout="centered")
-st.title("AI Fake News & Misinformation Verifier")
+st.set_page_config(page_title="Truth Intelligence", layout="centered", page_icon="🛡️")
+st.title("🛡️ Truth Intelligence: AI Misinformation Verifier")
 
 input_mode = st.radio("Choose Input Mode:", ["Direct Text Input", "Upload Image / Screenshot"], horizontal=True, key="input_mode_selector")
 user_claim = ""
@@ -79,6 +88,9 @@ if st.button("Verify Claim", type="primary"):
                 st.divider()
                 st.subheader("Retrieved Evidence & Sources")
                 evidence_list = data.get("evidence", [])
+                
+                # --- Map evidence to our graph format ---
+                mapped_sources = []
                 if evidence_list:
                     for idx, item in enumerate(evidence_list, start=1):
                         source_tag = item.get("source", "UNKNOWN")
@@ -87,60 +99,107 @@ if st.button("Verify Claim", type="primary"):
                         snippet = item.get("snippet", "No preview available.")
                         score = item.get("similarity_score", None)
 
+                        # Add to UI
                         score_str = f" | *Relevance Score: {score}*" if score is not None else ""
                         st.markdown(f"**{idx}. [{source_tag}]** [{title}]({url}){score_str}")
                         st.caption(snippet)
+                        
+                        # Add to mapped sources for the Graph Analytics
+                        stance = "debunking" if verdict == "REFUTED" else "spreading"
+                        mapped_sources.append({
+                            "domain": source_tag, 
+                            "stance": stance, 
+                            "trust_score": float(score) if score else 0.5, 
+                            "frequency": 1
+                        })
                     else:
-                        st.write("No external evidence links returned.")
-
-                    # --- PHASE 3 / PHASE 4: REPORT EXPORTING FEATURE ---
-                    st.divider()
-                    st.subheader("Export Verification Report")
-                    
-                    # Prepare report content structures
-                    report_data = {
-                        "timestamp": datetime.datetime.now().isoformat(),
-                        "claim": user_claim.strip(),
-                        "verdict": verdict,
-                        "confidence_score": f"{confidence_pct}%",
-                        "explanation": data.get('reason'),
-                        "evidence_sources": evidence_list
-                    }
-
-                    # Format as clean Markdown text block for easy reading/downloading
-                    md_lines = [
-                        "# Truth Intelligence - Verification Report",
-                        f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                        f"**Claim:** {user_claim.strip()}",
-                        f"**Verdict:** {verdict}",
-                        f"**Confidence Score:** {confidence_pct}%",
-                        f"\n## Explanation\n{data.get('reason')}",
-                        "\n## Retrieved Sources"
-                    ]
-                    for idx, item in enumerate(evidence_list, start=1):
-                        md_lines.append(f"{idx}. **[{item.get('source', 'UNKNOWN')}]** [{item.get('title', 'Link')}]({item.get('url', '#')})")
-                        md_lines.append(f"   > {item.get('snippet', '')}")
-                    
-                    markdown_report = "\n".join(md_lines)
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.download_button(
-                            label="Download as JSON",
-                            data=json.dumps(report_data, indent=4),
-                            file_name=f"verification_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                            mime="application/json"
-                        )
-                    with col2:
-                        st.download_button(
-                            label="Download as Markdown",
-                            data=markdown_report,
-                            file_name=f"verification_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                            mime="text/markdown"
-                        )
-
+                        pass # Executes if loop completes without break
                 else:
                     st.write("No external evidence links returned.")
 
+                # --- NEW: EXECUTIVE THREAT INTELLIGENCE DASHBOARD ---
+                st.divider()
+                st.subheader("📊 Threat Intelligence & Narrative Analytics")
+                
+                tab_graph, tab_velocity, tab_sources = st.tabs([
+                    "🕸️ Narrative Spread Graph",
+                    "📈 Viral Velocity Curves",
+                    "🌐 Source Distribution"
+                ])
+                
+                # Generate a mock claim ID for tracking if the backend didn't provide one
+                claim_id = data.get("claim_id", f"CLM-{uuid.uuid4().hex[:8].upper()}")
+                keywords = data.get("keywords", ["Misinformation", "Viral Claim"])
+
+                with tab_graph:
+                    fig_graph = render_narrative_graph(claim_id, cleaned_claim, keywords, mapped_sources)
+                    st.plotly_chart(fig_graph, use_container_width=True)
+
+                with tab_velocity:
+                    fig_velocity = render_velocity_curve() # Uses default mockup velocity for now
+                    st.plotly_chart(fig_velocity, use_container_width=True)
+
+                with tab_sources:
+                    if mapped_sources:
+                        fig_sources = render_source_distribution(mapped_sources)
+                        st.plotly_chart(fig_sources, use_container_width=True)
+                    else:
+                        st.info("Not enough source data to render distribution.")
+
+                # --- PHASE 3 / PHASE 4: SECURE REPORT EXPORTING FEATURE ---
+                st.divider()
+                st.subheader("🔐 Export Cryptographic Verification Report")
+                st.markdown("Download a tamper-proof, SHA-256 signed copy of this verdict.")
+                
+                # Prepare report data
+                report_data = {
+                    "claim_id": claim_id,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "claim": cleaned_claim,
+                    "verdict": verdict,
+                    "confidence_score": f"{confidence_pct}%",
+                    "explanation": data.get('reason'),
+                    "evidence_sources": evidence_list
+                }
+
+                # Format as clean Markdown text block
+                md_lines = [
+                    "# Truth Intelligence - Verification Report",
+                    f"**Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    f"**Claim ID:** {claim_id}",
+                    f"**Claim:** {cleaned_claim}",
+                    f"**Verdict:** {verdict}",
+                    f"**Confidence Score:** {confidence_pct}%",
+                    f"\n## Explanation\n{data.get('reason')}",
+                    "\n## Retrieved Sources"
+                ]
+                for idx, item in enumerate(evidence_list, start=1):
+                    md_lines.append(f"{idx}. **[{item.get('source', 'UNKNOWN')}]** [{item.get('title', 'Link')}]({item.get('url', '#')})")
+                    md_lines.append(f"   > {item.get('snippet', '')}")
+                
+                markdown_report = "\n".join(md_lines)
+
+                # --- Apply Cryptographic Signatures ---
+                signed_json, json_hash = CryptographicAuditLogger.generate_json_signature(report_data)
+                signed_md, md_hash = CryptographicAuditLogger.generate_markdown_signature(markdown_report, claim_id)
+
+                st.success(f"✅ Signatures Generated (SHA-256: `{json_hash[:12]}...`)")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        label="📥 Download Signed JSON",
+                        data=json.dumps(signed_json, indent=4),
+                        file_name=f"secure_report_{claim_id}.json",
+                        mime="application/json"
+                    )
+                with col2:
+                    st.download_button(
+                        label="📥 Download Signed Markdown",
+                        data=signed_md,
+                        file_name=f"secure_report_{claim_id}.md",
+                        mime="text/markdown"
+                    )
+
             except Exception as e:
-                st.error(f"Failed to connect to backend server: {e}")
+                st.error(f"Failed to connect to backend server or render analytics: {e}")
