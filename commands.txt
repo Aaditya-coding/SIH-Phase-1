@@ -3,3 +3,6 @@
 
 # frontend
 	py -m streamlit run frontend/app.py
+
+# benchmark testing command:
+	python evaluation/run_benchmark.py

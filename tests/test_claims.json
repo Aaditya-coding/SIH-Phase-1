@@ -78,5 +78,85 @@
   {
     "claim": "The capital city of Australia is Canberra.",
     "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "The chemical symbol for Gold on the periodic table is Au.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Humans only use 10% of their brains.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A startup in Silicon Valley released a microchip implant yesterday that allows humans to learn a new language overnight.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Mount Everest is the highest mountain above sea level on Earth.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Chameleons change their color primarily to blend in with their surroundings and camouflage themselves from predators.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A leaked document proves that the Loch Ness Monster is actually a genetically engineered submarine.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "The boiling point of water decreases as altitude increases due to lower atmospheric pressure.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Vikings historically wore horned helmets into battle.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A recent archaeological dig in Egypt uncovered a fully functioning ancient battery powered solely by desert sand.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Jupiter is the largest planet in our solar system.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Bulls get extremely angry and aggressive specifically because they see the color red.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A new herbal tea recipe discovered in the Himalayas instantly cures all forms of the common cold.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Alexander Fleming discovered penicillin in 1928.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Drinking exactly eight glasses of water a day is a scientifically proven strict requirement for human survival.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "A local teenager successfully built a working time machine out of an old microwave.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Napoleon Bonaparte was extremely short, standing at only 4 feet 5 inches tall.",
+    "expected_verdict": "REFUTED"
+  },
+  {
+    "claim": "Eating exactly three almonds at midnight prevents bad dreams permanently.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
+  },
+  {
+    "claim": "Varanasi is one of the oldest continuously inhabited cities in the world.",
+    "expected_verdict": "SUPPORTED"
+  },
+  {
+    "claim": "Aliens have secretly established a research base on the dark side of the moon.",
+    "expected_verdict": "INSUFFICIENT_EVIDENCE"
   }
 ]
