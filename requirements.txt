@@ -10,3 +10,9 @@ openai
 pytesseract
 pillow
 streamlit
+neo4j>=5.18.0
+streamlit>=1.30.0
+plotly>=5.18.0
+pandas>=2.0.0
+networkx>=3.0
+requests>=2.31.0
