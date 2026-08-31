@@ -10,3 +10,7 @@ openai
 pytesseract
 pillow
 streamlit
+celery==5.3.6
+redis==5.0.1
+qdrant_client==1.7.0
+sentence-transformers==2.3.1

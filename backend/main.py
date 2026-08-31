@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from celery.result import AsyncResult
+from backend.celery_app import celery_app
+from backend.tasks import run_claim_analysis_task
 import sys
 import os
-
-#validation safeguard
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,42 +19,51 @@ validate_environment()
 # Ensure modules are discoverable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ai.claim_extractor import extract_claims
-from retrieval.search_engine import search_claim
-from retrieval.rag_ranker import retrieve_evidence
-from ai.verifier import verify_claim
+app = FastAPI(title="Truth Intelligence API", version="1.0")
 
-app = FastAPI(title="Truth Intelligence API")
+# Enable CORS for frontend connectivity (Pawni's UI layer)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins for local development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class AnalyzeRequest(BaseModel):
-    input_type: str = "text"
-    content: str
+class ClaimRequest(BaseModel):
+    claim: str
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 @app.post("/analyze")
-def analyze(payload: AnalyzeRequest):
-    # 1. Claim extraction
-    claims = extract_claims(payload.content)
-    primary_claim = claims[0]["claim_text"] if claims else payload.content
-    
-    # 2. Search retrieval
-    raw_evidence = search_claim(primary_claim)
-    
-    # 3. Evidence ranking
-    ranked_evidence = retrieve_evidence(primary_claim, raw_evidence)
-    
-    # 4. Verification engine
-    verification = verify_claim(primary_claim, ranked_evidence)
-    
-    # 5. Return universal response
+def submit_claim_analysis(request: ClaimRequest):
+    """Offloads claim processing to a background Celery worker via Redis."""
+    task = run_claim_analysis_task.delay(request.claim)
     return {
-        "status": "success",
-        "claims": claims,
-        "verdict": verification["verdict"],
-        "confidence": verification["confidence"],
-        "reason": verification["reason"],
-        "evidence": ranked_evidence
+        "task_id": task.id,
+        "status": "QUEUED",
+        "message": "Claim analysis successfully enqueued for processing."
     }
+
+@app.get("/task-status/{task_id}")
+def get_task_status(task_id: str):
+    """Polls the status and results of the asynchronous verification task for the frontend UI."""
+    task_result = AsyncResult(task_id, app=celery_app)
+    
+    if task_result.state == 'PENDING':
+        response = {"task_id": task_id, "status": "PENDING", "result": None}
+    elif task_result.state != 'FAILURE':
+        response = {
+            "task_id": task_id,
+            "status": task_result.state,
+            "result": task_result.result,
+        }
+    else:
+        response = {
+            "task_id": task_id,
+            "status": "FAILURE",
+            "error": str(task_result.info),
+        }
+    return response
