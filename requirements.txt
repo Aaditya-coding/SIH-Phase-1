@@ -10,6 +10,10 @@ openai
 pytesseract
 pillow
 streamlit
+celery==5.3.6
+redis==5.0.1
+qdrant_client==1.7.0
+sentence-transformers==2.3.1
 neo4j>=5.18.0
 streamlit>=1.30.0
 plotly>=5.18.0
