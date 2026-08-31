@@ -6,6 +6,31 @@ import os
 import json
 import datetime
 import uuid
+import time
+
+BACKEND_URL = "http://localhost:8000"
+
+
+def check_backend():
+  try:
+    response = requests.get(f"{BACKEND_URL}/health")
+    return response.status_code == 200
+  except requests.exceptions.ConnectionError:
+    return False
+
+if "backend_ready" not in st.session_state:
+  st.session_state.backend_ready = False
+
+if not st.session_state.backend_ready:
+  with st.spinner(
+      "Tu!! Haan Tu BSDK whi aake maarunga!...backend load hone de!!!"
+  ):
+    while not check_backend():
+      time.sleep(1)
+    st.session_state.backend_ready = True
+    st.rerun()
+
+st.title("Truth Intelligence - Fake News Detection")
 
 # Set up paths to access backend and multimodal modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
