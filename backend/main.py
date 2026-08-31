@@ -37,10 +37,15 @@ class ClaimRequest(BaseModel):
 def health_check():
     return {"status": "ok"}
 
+class AnalyzeRequest(BaseModel):
+    input_type: str = "text"
+    content: str
+
 @app.post("/analyze")
-def submit_claim_analysis(request: ClaimRequest):
-    """Offloads claim processing to a background Celery worker via Redis."""
-    task = run_claim_analysis_task.delay(request.claim)
+def submit_claim_analysis(request: AnalyzeRequest):
+    """Offloads claim processing to a background Celery worker via Redis, supporting Alabhya's UI payload."""
+    # Use content as the claim text sent to Celery
+    task = run_claim_analysis_task.delay(request.content)
     return {
         "task_id": task.id,
         "status": "QUEUED",
@@ -64,6 +69,34 @@ def get_task_status(task_id: str):
         response = {
             "task_id": task_id,
             "status": "FAILURE",
+            "error": str(task_result.info),
+        }
+    return response
+
+@app.get("/task/{task_id}")
+async def get_task_status(task_id: str):
+    task_result = AsyncResult(task_id, app=celery_app)
+    
+    if task_result.state == 'PENDING':
+        response = {
+            "task_id": task_id,
+            "status": "PENDING",
+            "result": None
+        }
+    elif task_result.state != 'FAILURE':
+        response = {
+            "task_id": task_id,
+            "status": task_result.state, # e.g., 'SUCCESS'
+            "result": task_result.result,
+        }
+        # If the task completed successfully, unpack the result dictionary 
+        # so top-level keys like 'verdict' and 'confidence' are accessible directly:
+        if isinstance(task_result.result, dict):
+            response.update(task_result.result)
+    else:
+        response = {
+            "task_id": task_id,
+            "status": task_result.state,
             "error": str(task_result.info),
         }
     return response
