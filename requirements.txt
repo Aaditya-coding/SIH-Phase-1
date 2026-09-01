@@ -17,3 +17,4 @@ faiss-cpu
 openai
 pytesseract
 pillow
+deep-translator

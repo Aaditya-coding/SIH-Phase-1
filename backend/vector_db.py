@@ -44,8 +44,8 @@ def search_similar_claim(claim_text: str, threshold: float = 0.92):
         }
     return {"is_cached": False}
 
-def save_verified_claim(claim_text: str, verdict: str, evidence: list):
-    """Stores a newly verified claim and its verdict into Qdrant."""
+def save_verified_claim(claim_text: str, verdict: str, evidence: list, confidence: float = 88.5, explanation: str = ""):
+    """Stores a newly verified claim, its verdict, confidence, explanation, and evidence into Qdrant."""
     init_vector_collection()
     vector = embedding_model.encode(claim_text).tolist()
     point_id = abs(hash(claim_text)) % (10 ** 8) # Simple pseudo-unique numeric ID
@@ -59,6 +59,8 @@ def save_verified_claim(claim_text: str, verdict: str, evidence: list):
                 payload={
                     "claim": claim_text,
                     "verdict": verdict,
+                    "confidence": confidence,
+                    "explanation": explanation,
                     "evidence": evidence
                 }
             )
