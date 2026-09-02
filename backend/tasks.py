@@ -10,22 +10,24 @@ import json
 from dotenv import load_dotenv
 import openai
 
-# Load environment variables securely from .env file[cite: 2]
+# Load environment variables securely from .env file
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Initialize OpenAI client safely if key is present[cite: 2]
+# Initialize OpenAI client safely if key is present
 openai_client = openai.OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 @celery_app.task(bind=True)
 def run_claim_analysis_task(self, claim: str):
-    """Background task powered by OpenAI and dotenv for dynamic, professional intelligence generation[cite: 2]."""
+    """Background task powered by OpenAI and dotenv for dynamic, professional intelligence generation."""
     try:
-        # 0. Translate Regional Language/Hinglish to English[cite: 2]
+        # Emit Stage 1: Translation
+        self.update_state(state='PROGRESS', meta={'step': 'Translating & Preprocessing...', 'progress': 15})
         translation_meta = preprocess_and_translate_claim(claim)
         target_claim = translation_meta["processed_claim"]
 
-        # 1. Check Vector Cache (Strict Threshold)[cite: 2]
+        # Emit Stage 2: Cache Scanning
+        self.update_state(state='PROGRESS', meta={'step': 'Scanning Vector Cache...', 'progress': 35})
         cache_check = search_similar_claim(target_claim)
         if cache_check["is_cached"] and cache_check["score"] > 0.95:
             payload = cache_check["payload"]
@@ -45,10 +47,10 @@ def run_claim_analysis_task(self, claim: str):
                 "velocity_metrics": compute_industrial_velocity(target_claim, cached_verdict)
             }
 
-        # 2. Extract Entities via spaCy[cite: 2]
+        # Emit Stage 3: NER and AI Analysis
+        self.update_state(state='PROGRESS', meta={'step': 'Running OpenAI Threat Analysis...', 'progress': 60})
         extracted_entities = extract_entities(target_claim)
 
-        # 3. Dynamic OpenAI Intelligence Analysis[cite: 2]
         verdict = "SUPPORTED"
         confidence = 88.5
         explanation = "Analysis indicates alignment with verified public reporting and factual domain records."
@@ -92,7 +94,8 @@ def run_claim_analysis_task(self, claim: str):
             except Exception:
                 ai_snippets = []
 
-        # 4. Format Rich Intelligence Dossiers with Tiering & OpenAI Insights[cite: 2]
+        # Emit Stage 4: Formatting and Database Saving
+        self.update_state(state='PROGRESS', meta={'step': 'Formatting Dossiers...', 'progress': 85})
         formatted_evidence = []
         for idx, src in enumerate(evidence_sources):
             if idx < len(ai_snippets):
@@ -121,7 +124,6 @@ def run_claim_analysis_task(self, claim: str):
                 "is_flagged": tier_info["is_flagged"]
             })
 
-        # 5. Save to Databases[cite: 2]
         save_verified_claim(target_claim, verdict, formatted_evidence, confidence, explanation)
         save_claim_to_graph(target_claim, verdict, extracted_entities)
 

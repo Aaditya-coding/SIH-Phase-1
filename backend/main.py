@@ -44,7 +44,6 @@ class AnalyzeRequest(BaseModel):
 @app.post("/analyze")
 def submit_claim_analysis(request: AnalyzeRequest):
     """Offloads claim processing to a background Celery worker via Redis, supporting Alabhya's UI payload."""
-    # Use content as the claim text sent to Celery
     task = run_claim_analysis_task.delay(request.content)
     return {
         "task_id": task.id,
@@ -52,51 +51,44 @@ def submit_claim_analysis(request: AnalyzeRequest):
         "message": "Claim analysis successfully enqueued for processing."
     }
 
-@app.get("/task-status/{task_id}")
-def get_task_status(task_id: str):
-    """Polls the status and results of the asynchronous verification task for the frontend UI."""
-    task_result = AsyncResult(task_id, app=celery_app)
-    
-    if task_result.state == 'PENDING':
-        response = {"task_id": task_id, "status": "PENDING", "result": None}
-    elif task_result.state != 'FAILURE':
-        response = {
-            "task_id": task_id,
-            "status": task_result.state,
-            "result": task_result.result,
-        }
-    else:
-        response = {
-            "task_id": task_id,
-            "status": "FAILURE",
-            "error": str(task_result.info),
-        }
-    return response
-
 @app.get("/task/{task_id}")
 async def get_task_status(task_id: str):
+    """Consolidated endpoint that polls the status and handles PENDING, PROGRESS, SUCCESS, and FAILURE states for the frontend UI."""
     task_result = AsyncResult(task_id, app=celery_app)
     
     if task_result.state == 'PENDING':
         response = {
             "task_id": task_id,
             "status": "PENDING",
+            "step": "Task initializing in queue...",
+            "progress": 0,
             "result": None
         }
-    elif task_result.state != 'FAILURE':
+    elif task_result.state == 'PROGRESS':
+        # Extract the granular progress metadata injected from tasks.py
         response = {
             "task_id": task_id,
-            "status": task_result.state, # e.g., 'SUCCESS'
+            "status": "PROGRESS",
+            "step": task_result.info.get("step", "Processing..."),
+            "progress": task_result.info.get("progress", 50),
+            "result": None
+        }
+    elif task_result.state == 'SUCCESS':
+        response = {
+            "task_id": task_id,
+            "status": task_result.state,
+            "progress": 100,
             "result": task_result.result,
         }
-        # If the task completed successfully, unpack the result dictionary 
-        # so top-level keys like 'verdict' and 'confidence' are accessible directly:
+        # Unpack the result dictionary so top-level keys like 'verdict' and 'confidence' are accessible directly
         if isinstance(task_result.result, dict):
             response.update(task_result.result)
     else:
+        # Handles FAILURE and any other unexpected states
         response = {
             "task_id": task_id,
             "status": task_result.state,
             "error": str(task_result.info),
         }
+        
     return response
