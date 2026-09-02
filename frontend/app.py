@@ -5,6 +5,44 @@ import sys
 import os
 import json
 import datetime
+from fpdf import FPDF
+
+# 1. Function to generate the PDF in memory
+def create_pdf(report_text):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Add a title
+    pdf.set_font("Arial", style="B", size=16)
+    pdf.cell(200, 10, txt="Intelligence Brief", ln=True, align="C")
+    
+    # Add the report content
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, txt=report_text)
+    
+    # Return the PDF as bytes so Streamlit can download it directly without saving to disk
+    return pdf.output(dest="S").encode("latin-1")
+
+# 2. Streamlit UI
+st.title("Task 4: PDF Intelligence Briefs")
+st.write("Generate and export your intelligence reports here.")
+
+# Text area for the user to type or paste the report
+report_content = st.text_area("Enter your report details:", height=200)
+
+# 3. The Download Button
+if report_content:
+    # Generate the PDF bytes only if there is content
+    pdf_bytes = create_pdf(report_content)
+    
+    st.download_button(
+        label="📄 Download PDF Brief",
+        data=pdf_bytes,
+        file_name="intelligence_brief.pdf",
+        mime="application/pdf"
+    )
+else:
+    st.info("Enter some text above to generate a PDF.")
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
