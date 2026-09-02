@@ -1,0 +1,3074 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>SIH-Phase-1 Architecture</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Inter,Arial,sans-serif;
+    background:#f8fafc;
+    color:#0f172a;
+}
+
+
+/* =========================
+   TOP BAR
+========================= */
+
+.topbar{
+
+    height:64px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 22px;
+
+    background:#ffffff;
+
+    border-bottom:1px solid #dbe4ee;
+
+    position:relative;
+
+    z-index:20;
+
+}
+
+.title{
+
+    font-size:17px;
+
+    font-weight:700;
+
+}
+
+.subtitle{
+
+    font-size:11px;
+
+    color:#64748b;
+
+    margin-top:3px;
+
+}
+
+.controls{
+
+    display:flex;
+
+    gap:7px;
+
+}
+
+.controls button{
+
+    border:1px solid #dbe4ee;
+
+    background:#ffffff;
+
+    padding:8px 12px;
+
+    border-radius:7px;
+
+    cursor:pointer;
+
+    font-size:12px;
+
+    color:#334155;
+
+}
+
+.controls button:hover{
+
+    background:#f1f5f9;
+
+}
+
+
+/* =========================
+   GRAPH AREA
+========================= */
+
+#viewport{
+
+    position:absolute;
+
+    top:64px;
+
+    bottom:0;
+
+    left:0;
+
+    right:0;
+
+    overflow:hidden;
+
+    cursor:grab;
+
+    background-color:#fbfdff;
+
+    background-image:
+
+        radial-gradient(#dbe7f0 1.2px,transparent 1.2px);
+
+    background-size:28px 28px;
+
+}
+
+#viewport.dragging{
+
+    cursor:grabbing;
+
+}
+
+#graph{
+
+    width:1600px;
+
+    height:1500px;
+
+    transform-origin:0 0;
+
+    position:absolute;
+
+}
+
+
+/* =========================
+   SVG
+========================= */
+
+svg{
+
+    width:1600px;
+
+    height:1500px;
+
+    overflow:visible;
+
+}
+
+
+/* =========================
+   CLUSTERS
+========================= */
+
+.cluster{
+
+    fill:#ffffff;
+
+    stroke-width:1.5;
+
+    rx:12;
+
+}
+
+.cluster-title{
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+}
+
+.cluster-path{
+
+    font-size:10px;
+
+    fill:#64748b;
+
+}
+
+
+/* =========================
+   NODES
+========================= */
+
+.node{
+
+    cursor:pointer;
+
+}
+
+.node rect{
+
+    fill:#ffffff;
+
+    stroke-width:1.5;
+
+    rx:22;
+
+    transition:.18s;
+
+}
+
+.node:hover rect{
+
+    filter:drop-shadow(0 4px 7px rgba(15,23,42,.16));
+
+    stroke-width:2.5;
+
+}
+
+.node text{
+
+    pointer-events:none;
+
+}
+
+.file-name{
+
+    font-size:12px;
+
+    font-weight:600;
+
+    fill:#0f172a;
+
+}
+
+.file-desc{
+
+    font-size:9px;
+
+    fill:#64748b;
+
+}
+
+
+/* COLORS */
+
+.input rect{
+
+    stroke:#0284c7;
+
+}
+
+.frontend rect{
+
+    stroke:#0ea5e9;
+
+}
+
+.backend rect{
+
+    stroke:#f97316;
+
+}
+
+.ai rect{
+
+    stroke:#9333ea;
+
+}
+
+.retrieval rect{
+
+    stroke:#6366f1;
+
+}
+
+.multimodal rect{
+
+    stroke:#65a30d;
+
+}
+
+.evaluation rect{
+
+    stroke:#059669;
+
+}
+
+.docs rect{
+
+    stroke:#64748b;
+
+}
+
+.support rect{
+
+    stroke:#94a3b8;
+
+}
+
+
+/* =========================
+   EDGES
+========================= */
+
+.edge{
+
+    fill:none;
+
+    stroke:#475569;
+
+    stroke-width:1.4;
+
+}
+
+.edge.dashed{
+
+    stroke-dasharray:5 5;
+
+    stroke:#94a3b8;
+
+}
+
+.edge-label{
+
+    font-size:9px;
+
+    fill:#475569;
+
+    paint-order:stroke;
+
+    stroke:#fbfdff;
+
+    stroke-width:5px;
+
+}
+
+
+/* =========================
+   SIDE PANEL
+========================= */
+
+#overlay{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(15,23,42,.18);
+
+    z-index:40;
+
+}
+
+
+#panel{
+
+    position:fixed;
+
+    right:0;
+
+    top:0;
+
+    width:430px;
+
+    height:100vh;
+
+    background:#ffffff;
+
+    border-left:1px solid #dbe4ee;
+
+    box-shadow:-12px 0 35px rgba(15,23,42,.12);
+
+    z-index:50;
+
+    transform:translateX(100%);
+
+    transition:transform .25s ease;
+
+    overflow-y:auto;
+
+}
+
+
+#panel.open{
+
+    transform:translateX(0);
+
+}
+
+
+.panel-header{
+
+    padding:22px;
+
+    border-bottom:1px solid #e2e8f0;
+
+}
+
+.panel-header h2{
+
+    margin:0;
+
+    font-size:19px;
+
+}
+
+.path{
+
+    color:#64748b;
+
+    font-family:monospace;
+
+    font-size:11px;
+
+    margin-top:6px;
+
+}
+
+.close{
+
+    position:absolute;
+
+    right:18px;
+
+    top:15px;
+
+    border:none;
+
+    background:none;
+
+    font-size:27px;
+
+    cursor:pointer;
+
+    color:#64748b;
+
+}
+
+
+.panel-body{
+
+    padding:22px;
+
+}
+
+.section{
+
+    margin-bottom:23px;
+
+}
+
+.section-title{
+
+    font-size:10px;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    color:#7c3aed;
+
+    font-weight:700;
+
+    margin-bottom:8px;
+
+}
+
+.section p{
+
+    font-size:13px;
+
+    line-height:1.6;
+
+    color:#334155;
+
+}
+
+.section ul{
+
+    margin:0;
+
+    padding-left:20px;
+
+}
+
+.section li{
+
+    margin-bottom:7px;
+
+    font-size:13px;
+
+    color:#334155;
+
+}
+
+.function{
+
+    background:#f1f5f9;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:7px;
+
+    padding:8px 10px;
+
+    margin-bottom:7px;
+
+    font-family:monospace;
+
+    font-size:11px;
+
+    color:#334155;
+
+}
+
+.github{
+
+    display:inline-block;
+
+    text-decoration:none;
+
+    background:#0f172a;
+
+    color:white;
+
+    padding:10px 14px;
+
+    border-radius:7px;
+
+    font-size:12px;
+
+}
+
+
+/* =========================
+   LEGEND
+========================= */
+
+.legend{
+
+    position:fixed;
+
+    left:18px;
+
+    bottom:18px;
+
+    background:white;
+
+    border:1px solid #dbe4ee;
+
+    border-radius:9px;
+
+    padding:10px 12px;
+
+    z-index:15;
+
+    box-shadow:0 3px 15px rgba(15,23,42,.08);
+
+}
+
+.legend-title{
+
+    font-size:10px;
+
+    font-weight:700;
+
+    color:#64748b;
+
+    margin-bottom:7px;
+
+}
+
+.legend-row{
+
+    display:flex;
+
+    gap:12px;
+
+    font-size:10px;
+
+}
+
+.dot{
+
+    display:inline-block;
+
+    width:8px;
+
+    height:8px;
+
+    border-radius:50%;
+
+    margin-right:4px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<div class="topbar">
+
+    <div>
+
+        <div class="title">
+            SIH-Phase-1 — Architecture
+        </div>
+
+        <div class="subtitle">
+            Interactive Codebase & Data Flow
+        </div>
+
+    </div>
+
+
+    <div class="controls">
+
+        <button onclick="zoomIn()">+</button>
+
+        <button onclick="zoomOut()">−</button>
+
+        <button onclick="fitGraph()">Fit</button>
+
+        <button onclick="resetGraph()">Reset</button>
+
+        <button onclick="toggleDirection()">
+            Top to Bottom
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     GRAPH
+========================= -->
+
+<div id="viewport">
+
+<div id="graph">
+
+<svg
+    id="svg"
+    viewBox="0 0 1600 1500"
+    xmlns="http://www.w3.org/2000/svg"
+>
+
+
+<defs>
+
+    <marker
+        id="arrow"
+        markerWidth="8"
+        markerHeight="8"
+        refX="7"
+        refY="3.5"
+        orient="auto"
+        markerUnits="strokeWidth">
+
+        <path
+            d="M0,0 L0,7 L7,3.5 z"
+            fill="#475569"/>
+
+    </marker>
+
+
+    <marker
+        id="arrowDashed"
+        markerWidth="8"
+        markerHeight="8"
+        refX="7"
+        refY="3.5"
+        orient="auto"
+        markerUnits="strokeWidth">
+
+        <path
+            d="M0,0 L0,7 L7,3.5 z"
+            fill="#94a3b8"/>
+
+    </marker>
+
+</defs>
+
+
+<!-- =================================================
+     CLUSTERS
+================================================= -->
+
+
+<!-- INPUT -->
+
+<rect
+    class="cluster"
+    x="570"
+    y="40"
+    width="460"
+    height="115"
+    stroke="#0284c7"/>
+
+<text
+    class="cluster-title"
+    x="590"
+    y="63"
+    fill="#0284c7">
+
+    1. INPUT INGESTION
+
+</text>
+
+<text
+    class="cluster-path"
+    x="590"
+    y="79">
+
+    user input
+
+</text>
+
+
+<!-- FRONTEND -->
+
+<rect
+    class="cluster"
+    x="470"
+    y="210"
+    width="660"
+    height="185"
+    stroke="#0ea5e9"/>
+
+<text
+    class="cluster-title"
+    x="490"
+    y="234"
+    fill="#0284c7">
+
+    2. PRESENTATION LAYER
+
+</text>
+
+<text
+    class="cluster-path"
+    x="490"
+    y="250">
+
+    frontend/
+
+</text>
+
+
+<!-- MULTIMODAL -->
+
+<rect
+    class="cluster"
+    x="1150"
+    y="210"
+    width="330"
+    height="145"
+    stroke="#65a30d"/>
+
+<text
+    class="cluster-title"
+    x="1170"
+    y="234"
+    fill="#65a30d">
+
+    3. MULTIMODAL PROCESSING
+
+</text>
+
+<text
+    class="cluster-path"
+    x="1170"
+    y="250">
+
+    multimodal/
+
+</text>
+
+
+<!-- BACKEND -->
+
+<rect
+    class="cluster"
+    x="570"
+    y="445"
+    width="460"
+    height="150"
+    stroke="#f97316"/>
+
+<text
+    class="cluster-title"
+    x="590"
+    y="469"
+    fill="#ea580c">
+
+    4. API & ROUTING LAYER
+
+</text>
+
+<text
+    class="cluster-path"
+    x="590"
+    y="485">
+
+    backend/
+
+</text>
+
+
+<!-- AI -->
+
+<rect
+    class="cluster"
+    x="420"
+    y="645"
+    width="350"
+    height="190"
+    stroke="#9333ea"/>
+
+<text
+    class="cluster-title"
+    x="440"
+    y="669"
+    fill="#9333ea">
+
+    5. AI / CLAIM PROCESSING
+
+</text>
+
+<text
+    class="cluster-path"
+    x="440"
+    y="685">
+
+    ai/
+
+</text>
+
+
+<!-- RETRIEVAL -->
+
+<rect
+    class="cluster"
+    x="800"
+    y="625"
+    width="500"
+    height="260"
+    stroke="#6366f1"/>
+
+<text
+    class="cluster-title"
+    x="820"
+    y="649"
+    fill="#4f46e5">
+
+    6. EVIDENCE RETRIEVAL & SCORING
+
+</text>
+
+<text
+    class="cluster-path"
+    x="820"
+    y="665">
+
+    retrieval/
+
+</text>
+
+
+<!-- VERIFICATION -->
+
+<rect
+    class="cluster"
+    x="560"
+    y="940"
+    width="480"
+    height="145"
+    stroke="#e11d48"/>
+
+<text
+    class="cluster-title"
+    x="580"
+    y="964"
+    fill="#e11d48">
+
+    7. CLAIM VERIFICATION
+
+</text>
+
+<text
+    class="cluster-path"
+    x="580"
+    y="980">
+
+    ai/
+
+</text>
+
+
+<!-- EVALUATION -->
+
+<rect
+    class="cluster"
+    x="80"
+    y="445"
+    width="340"
+    height="170"
+    stroke="#059669"/>
+
+<text
+    class="cluster-title"
+    x="100"
+    y="469"
+    fill="#059669">
+
+    OFFLINE BENCHMARKING
+
+</text>
+
+<text
+    class="cluster-path"
+    x="100"
+    y="485">
+
+    evaluation/
+
+</text>
+
+
+<!-- SUPPORT -->
+
+<rect
+    class="cluster"
+    x="120"
+    y="1160"
+    width="1360"
+    height="230"
+    stroke="#94a3b8"/>
+
+<text
+    class="cluster-title"
+    x="140"
+    y="1184"
+    fill="#64748b">
+
+    SUPPORTING FILES & CONFIGURATION
+
+</text>
+
+
+<!-- =================================================
+     EDGES
+================================================= -->
+
+
+<!-- INPUT → FRONTEND -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M800 155 L800 275"/>
+
+<text
+    class="edge-label"
+    x="815"
+    y="220">
+
+    Input
+
+</text>
+
+
+<!-- IMAGE → OCR -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M920 135 C1050 135 1160 165 1315 275"/>
+
+<text
+    class="edge-label"
+    x="1080"
+    y="170">
+
+    Image
+
+</text>
+
+
+<!-- OCR → FRONTEND -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M1315 325 C1200 370 1100 340 1010 300"/>
+
+<text
+    class="edge-label"
+    x="1120"
+    y="350">
+
+    Extracted text
+
+</text>
+
+
+<!-- FRONTEND → BACKEND -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M800 395 L800 445"/>
+
+<text
+    class="edge-label"
+    x="815"
+    y="425">
+
+    REST API /analyze
+
+</text>
+
+
+<!-- BENCHMARK → BACKEND -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M420 530 C500 530 530 520 570 520"/>
+
+<text
+    class="edge-label"
+    x="455"
+    y="510">
+
+    Test requests
+
+</text>
+
+
+<!-- BACKEND → CLAIM -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M760 595 L600 690"/>
+
+<text
+    class="edge-label"
+    x="610"
+    y="630">
+
+    payload.content
+
+</text>
+
+
+<!-- BACKEND → SEARCH -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M850 595 C850 620 870 650 900 690"/>
+
+<text
+    class="edge-label"
+    x="875"
+    y="635">
+
+    primary claim
+
+</text>
+
+
+<!-- CLAIM → SEARCH -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M650 755 C730 755 800 710 900 710"/>
+
+<text
+    class="edge-label"
+    x="760"
+    y="735">
+
+    Extracted claim
+
+</text>
+
+
+<!-- SEARCH → RAG -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M1045 735 L1045 770"/>
+
+<text
+    class="edge-label"
+    x="1060"
+    y="758">
+
+    Raw web context
+
+</text>
+
+
+<!-- RAG → SOURCE -->
+
+<path
+    class="edge dashed"
+    marker-end="url(#arrowDashed)"
+    d="M1045 825 L1045 850"/>
+
+<text
+    class="edge-label"
+    x="1060"
+    y="842">
+
+    Optional credibility weighting
+
+</text>
+
+
+<!-- RAG → VERIFIER -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M960 885 C900 920 850 940 800 965"/>
+
+<text
+    class="edge-label"
+    x="850"
+    y="920">
+
+    Ranked evidence
+
+</text>
+
+
+<!-- SOURCE → VERIFIER -->
+
+<path
+    class="edge dashed"
+    marker-end="url(#arrowDashed)"
+    d="M1150 885 C1120 950 1000 990 900 990"/>
+
+<text
+    class="edge-label"
+    x="1030"
+    y="955">
+
+    Credibility score
+
+</text>
+
+
+<!-- CLAIM → VERIFIER -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M600 835 C600 900 650 945 700 965"/>
+
+<text
+    class="edge-label"
+    x="500"
+    y="910">
+
+    Claim
+
+</text>
+
+
+<!-- VERIFIER → OUTPUT -->
+
+<path
+    class="edge"
+    marker-end="url(#arrow)"
+    d="M800 1085 L800 1135"/>
+
+
+<!-- =================================================
+     NODES
+================================================= -->
+
+
+<!-- USER TEXT -->
+
+<g class="node input"
+   data-id="text-input"
+   onclick="showInfo('text-input')">
+
+    <rect x="600" y="90" width="180" height="48"/>
+
+    <text
+        class="file-name"
+        x="690"
+        y="111"
+        text-anchor="middle">
+
+        User Input: Text
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="690"
+        y="126"
+        text-anchor="middle">
+
+        Claim / Document
+
+    </text>
+
+</g>
+
+
+<!-- USER IMAGE -->
+
+<g class="node input"
+   data-id="image-input"
+   onclick="showInfo('image-input')">
+
+    <rect x="820" y="90" width="180" height="48"/>
+
+    <text
+        class="file-name"
+        x="910"
+        y="111"
+        text-anchor="middle">
+
+        User Input: Image
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="910"
+        y="126"
+        text-anchor="middle">
+
+        Screenshot / Notice
+
+    </text>
+
+</g>
+
+
+<!-- FRONTEND APP -->
+
+<g class="node frontend"
+   onclick="showInfo('frontend-app')">
+
+    <rect x="600" y="275" width="220" height="52"/>
+
+    <text
+        class="file-name"
+        x="710"
+        y="298"
+        text-anchor="middle">
+
+        app.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="710"
+        y="313"
+        text-anchor="middle">
+
+        Streamlit UI
+
+    </text>
+
+</g>
+
+
+<!-- USERS -->
+
+<g class="node frontend"
+   onclick="showInfo('users')">
+
+    <rect x="850" y="275" width="220" height="52"/>
+
+    <text
+        class="file-name"
+        x="960"
+        y="298"
+        text-anchor="middle">
+
+        users.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="960"
+        y="313"
+        text-anchor="middle">
+
+        Alternate UI / user flow
+
+    </text>
+
+</g>
+
+
+<!-- OCR -->
+
+<g class="node multimodal"
+   onclick="showInfo('ocr')">
+
+    <rect x="1210" y="275" width="220" height="52"/>
+
+    <text
+        class="file-name"
+        x="1320"
+        y="298"
+        text-anchor="middle">
+
+        ocr_reader.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="1320"
+        y="313"
+        text-anchor="middle">
+
+        Image → Text
+
+    </text>
+
+</g>
+
+
+<!-- BACKEND -->
+
+<g class="node backend"
+   onclick="showInfo('backend')">
+
+    <rect x="660" y="500" width="280" height="58"/>
+
+    <text
+        class="file-name"
+        x="800"
+        y="526"
+        text-anchor="middle">
+
+        main.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="800"
+        y="543"
+        text-anchor="middle">
+
+        FastAPI Application & Routing
+
+    </text>
+
+</g>
+
+
+<!-- BENCHMARK -->
+
+<g class="node evaluation"
+   onclick="showInfo('benchmark')">
+
+    <rect x="140" y="515" width="220" height="52"/>
+
+    <text
+        class="file-name"
+        x="250"
+        y="538"
+        text-anchor="middle">
+
+        run_benchmark.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="250"
+        y="553"
+        text-anchor="middle">
+
+        Pipeline Evaluation
+
+    </text>
+
+</g>
+
+
+<!-- CLAIM -->
+
+<g class="node ai"
+   onclick="showInfo('extractor')">
+
+    <rect x="485" y="700" width="230" height="58"/>
+
+    <text
+        class="file-name"
+        x="600"
+        y="726"
+        text-anchor="middle">
+
+        claim_extractor.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="600"
+        y="743"
+        text-anchor="middle">
+
+        extract_claims()
+
+    </text>
+
+</g>
+
+
+<!-- SEARCH -->
+
+<g class="node retrieval"
+   onclick="showInfo('search')">
+
+    <rect x="900" y="690" width="290" height="58"/>
+
+    <text
+        class="file-name"
+        x="1045"
+        y="716"
+        text-anchor="middle">
+
+        search_engine.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="1045"
+        y="733"
+        text-anchor="middle">
+
+        search_claim()
+
+    </text>
+
+</g>
+
+
+<!-- RAG -->
+
+<g class="node retrieval"
+   onclick="showInfo('rag')">
+
+    <rect x="900" y="770" width="290" height="58"/>
+
+    <text
+        class="file-name"
+        x="1045"
+        y="796"
+        text-anchor="middle">
+
+        rag_ranker.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="1045"
+        y="813"
+        text-anchor="middle">
+
+        retrieve_evidence()
+
+    </text>
+
+</g>
+
+
+<!-- SOURCE -->
+
+<g class="node retrieval"
+   onclick="showInfo('source')">
+
+    <rect x="900" y="850" width="290" height="58"/>
+
+    <text
+        class="file-name"
+        x="1045"
+        y="876"
+        text-anchor="middle">
+
+        source_ranker.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="1045"
+        y="893"
+        text-anchor="middle">
+
+        apply_credibility_weighting()
+
+    </text>
+
+</g>
+
+
+<!-- VERIFIER -->
+
+<g class="node ai"
+   onclick="showInfo('verifier')">
+
+    <rect x="660" y="965" width="280" height="62"/>
+
+    <text
+        class="file-name"
+        x="800"
+        y="992"
+        text-anchor="middle">
+
+        verifier.py
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="800"
+        y="1010"
+        text-anchor="middle">
+
+        verify_claim()
+
+    </text>
+
+</g>
+
+
+<!-- OUTPUT -->
+
+<g class="node"
+   onclick="showInfo('output')">
+
+    <rect
+        x="650"
+        y="1135"
+        width="300"
+        height="60"
+        fill="#fff1f2"
+        stroke="#e11d48"
+        stroke-width="1.5"
+        rx="22"/>
+
+    <text
+        class="file-name"
+        x="800"
+        y="1160"
+        text-anchor="middle">
+
+        Verification Result
+
+    </text>
+
+    <text
+        class="file-desc"
+        x="800"
+        y="1177"
+        text-anchor="middle">
+
+        Verdict · Confidence · Evidence
+
+    </text>
+
+</g>
+
+
+<!-- =================================================
+     SUPPORTING FILES
+================================================= -->
+
+
+<g class="node docs"
+   onclick="showInfo('api-doc')">
+
+    <rect x="160" y="1215" width="230" height="55"/>
+
+    <text class="file-name"
+          x="275"
+          y="1240"
+          text-anchor="middle">
+
+        docs/api.md
+
+    </text>
+
+    <text class="file-desc"
+          x="275"
+          y="1257"
+          text-anchor="middle">
+
+        API Documentation
+
+    </text>
+
+</g>
+
+
+<g class="node docs"
+   onclick="showInfo('api-txt')">
+
+    <rect x="420" y="1215" width="230" height="55"/>
+
+    <text class="file-name"
+          x="535"
+          y="1240"
+          text-anchor="middle">
+
+        docs/api.txt
+
+    </text>
+
+    <text class="file-desc"
+          x="535"
+          y="1257"
+          text-anchor="middle">
+
+        API Notes
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('tests')">
+
+    <rect x="680" y="1215" width="230" height="55"/>
+
+    <text class="file-name"
+          x="795"
+          y="1240"
+          text-anchor="middle">
+
+        tests/test_claims.json
+
+    </text>
+
+    <text class="file-desc"
+          x="795"
+          y="1257"
+          text-anchor="middle">
+
+        Benchmark Dataset
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('requirements')">
+
+    <rect x="940" y="1215" width="230" height="55"/>
+
+    <text class="file-name"
+          x="1055"
+          y="1240"
+          text-anchor="middle">
+
+        requirements.txt
+
+    </text>
+
+    <text class="file-desc"
+          x="1055"
+          y="1257"
+          text-anchor="middle">
+
+        Python Dependencies
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('docker')">
+
+    <rect x="1200" y="1215" width="230" height="55"/>
+
+    <text class="file-name"
+          x="1315"
+          y="1240"
+          text-anchor="middle">
+
+        docker-compose.yml
+
+    </text>
+
+    <text class="file-desc"
+          x="1315"
+          y="1257"
+          text-anchor="middle">
+
+        Service Orchestration
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('docker-backend')">
+
+    <rect x="160" y="1300" width="230" height="55"/>
+
+    <text class="file-name"
+          x="275"
+          y="1325"
+          text-anchor="middle">
+
+        Dockerfile.backend
+
+    </text>
+
+    <text class="file-desc"
+          x="275"
+          y="1342"
+          text-anchor="middle">
+
+        Backend Container
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('docker-frontend')">
+
+    <rect x="420" y="1300" width="230" height="55"/>
+
+    <text class="file-name"
+          x="535"
+          y="1325"
+          text-anchor="middle">
+
+        Dockerfile.frontend
+
+    </text>
+
+    <text class="file-desc"
+          x="535"
+          y="1342"
+          text-anchor="middle">
+
+        Frontend Container
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('bat')">
+
+    <rect x="680" y="1300" width="230" height="55"/>
+
+    <text class="file-name"
+          x="795"
+          y="1325"
+          text-anchor="middle">
+
+        Truth_Intelligence.bat
+
+    </text>
+
+    <text class="file-desc"
+          x="795"
+          y="1342"
+          text-anchor="middle">
+
+        Local Launcher
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('env')">
+
+    <rect x="940" y="1300" width="230" height="55"/>
+
+    <text class="file-name"
+          x="1055"
+          y="1325"
+          text-anchor="middle">
+
+        .env.example
+
+    </text>
+
+    <text class="file-desc"
+          x="1055"
+          y="1342"
+          text-anchor="middle">
+
+        Environment Template
+
+    </text>
+
+</g>
+
+
+<g class="node support"
+   onclick="showInfo('readme')">
+
+    <rect x="1200" y="1300" width="230" height="55"/>
+
+    <text class="file-name"
+          x="1315"
+          y="1325"
+          text-anchor="middle">
+
+        README.md
+
+    </text>
+
+    <text class="file-desc"
+          x="1315"
+          y="1342"
+          text-anchor="middle">
+
+        Project Documentation
+
+    </text>
+
+</g>
+
+
+</svg>
+
+</div>
+
+</div>
+
+
+<!-- LEGEND -->
+
+<div class="legend">
+
+    <div class="legend-title">
+        MODULES
+    </div>
+
+    <div class="legend-row">
+
+        <span>
+            <span class="dot"
+                  style="background:#9333ea"></span>
+            AI
+        </span>
+
+        <span>
+            <span class="dot"
+                  style="background:#6366f1"></span>
+            Retrieval
+        </span>
+
+        <span>
+            <span class="dot"
+                  style="background:#f97316"></span>
+            Backend
+        </span>
+
+        <span>
+            <span class="dot"
+                  style="background:#0ea5e9"></span>
+            Frontend
+        </span>
+
+    </div>
+
+</div>
+
+
+<!-- OVERLAY -->
+
+<div id="overlay"
+     onclick="closePanel()">
+</div>
+
+
+<!-- SIDE PANEL -->
+
+<aside id="panel">
+
+    <button class="close"
+            onclick="closePanel()">
+
+        ×
+
+    </button>
+
+    <div id="panelContent"></div>
+
+</aside>
+
+
+<script>
+
+
+/* =====================================================
+   REPOSITORY DATA
+===================================================== */
+
+const BASE_REPO =
+    "https://github.com/Aaditya-coding/SIH-Phase-1/blob/main/";
+
+
+const files = {
+
+
+"text-input":{
+
+    title:"User Text Input",
+
+    path:"Input",
+
+    purpose:
+        "Direct textual input supplied by the user. The text becomes the claim that enters the verification pipeline.",
+
+    functions:[
+        "Accept factual statement",
+        "Accept news claim",
+        "Pass text to the frontend"
+    ],
+
+    input:"User-provided text",
+
+    output:"Text claim",
+
+},
+
+
+"image-input":{
+
+    title:"User Image Input",
+
+    path:"Input",
+
+    purpose:
+        "Accepts screenshots, notices or other images containing a claim.",
+
+    functions:[
+        "Upload image",
+        "Pass image to OCR processing"
+    ],
+
+    input:"PNG / JPG / JPEG",
+
+    output:"Image object"
+
+},
+
+
+"frontend-app":{
+
+    title:"app.py",
+
+    path:"frontend/app.py",
+
+    purpose:
+        "Main Streamlit user interface. It accepts direct text or image input, sends claims to the backend and renders the verification result.",
+
+    functions:[
+        "check_backend()",
+        "fetch_verification_cached(claim_text)",
+        "Accept text input",
+        "Upload image / screenshot",
+        "Display verdict",
+        "Display confidence",
+        "Display evidence",
+        "Export JSON report",
+        "Export Markdown report"
+    ],
+
+    input:
+        "User text or uploaded image",
+
+    output:
+        "REST request to /analyze and rendered result",
+
+    connections:[
+        "multimodal/ocr_reader.py",
+        "backend/main.py"
+    ],
+
+    github:"frontend/app.py"
+
+},
+
+
+"users":{
+
+    title:"users.py",
+
+    path:"frontend/users.py",
+
+    purpose:
+        "An additional Streamlit frontend flow containing the same claim-input, OCR, backend-request and result-rendering logic.",
+
+    functions:[
+        "Accept direct claim",
+        "Upload image",
+        "Extract OCR text",
+        "Send /analyze request",
+        "Display verdict",
+        "Display confidence",
+        "Display evidence",
+        "Export verification report"
+    ],
+
+    input:"Text or image",
+
+    output:"Verification result",
+
+    connections:[
+        "multimodal/ocr_reader.py",
+        "backend/main.py"
+    ],
+
+    github:"frontend/users.py"
+
+},
+
+
+"ocr":{
+
+    title:"ocr_reader.py",
+
+    path:"multimodal/ocr_reader.py",
+
+    purpose:
+        "Converts text contained inside an uploaded image into machine-readable text using Tesseract OCR.",
+
+    functions:[
+        "extract_text_from_image(image_input)"
+    ],
+
+    input:"Image / screenshot",
+
+    output:"Extracted text",
+
+    dependencies:[
+        "Pillow",
+        "pytesseract",
+        "Tesseract OCR"
+    ],
+
+    connections:[
+        "frontend/app.py",
+        "frontend/users.py",
+        "ai/claim_extractor.py"
+    ],
+
+    github:"multimodal/ocr_reader.py"
+
+},
+
+
+"backend":{
+
+    title:"main.py",
+
+    path:"backend/main.py",
+
+    purpose:
+        "Central FastAPI orchestration layer. It receives the claim and runs extraction, search, evidence ranking and AI verification.",
+
+    functions:[
+        "validate_environment()",
+        "health_check()",
+        "analyze(payload)",
+        "Call extract_claims()",
+        "Call search_claim()",
+        "Call retrieve_evidence()",
+        "Call verify_claim()"
+    ],
+
+    input:
+        "POST /analyze with input_type and content",
+
+    output:
+        "Verdict, confidence, reason and evidence",
+
+    connections:[
+        "ai/claim_extractor.py",
+        "retrieval/search_engine.py",
+        "retrieval/rag_ranker.py",
+        "ai/verifier.py"
+    ],
+
+    github:"backend/main.py"
+
+},
+
+
+"extractor":{
+
+    title:"claim_extractor.py",
+
+    path:"ai/claim_extractor.py",
+
+    purpose:
+        "Extracts structured factual information from the input text.",
+
+    functions:[
+        "extract_claims(text)"
+    ],
+
+    input:"Raw claim text",
+
+    output:[
+        "claim_text",
+        "entities",
+        "dates",
+        "numbers"
+    ],
+
+    dependencies:[
+        "Python re"
+    ],
+
+    connections:[
+        "backend/main.py",
+        "retrieval/search_engine.py"
+    ],
+
+    github:"ai/claim_extractor.py"
+
+},
+
+
+"search":{
+
+    title:"search_engine.py",
+
+    path:"retrieval/search_engine.py",
+
+    purpose:
+        "Searches the web for evidence related to the extracted claim and categorizes sources.",
+
+    functions:[
+        "search_claim(claim, max_results)",
+        "clear_search_cache()"
+    ],
+
+    input:"Primary claim",
+
+    output:[
+        "title",
+        "url",
+        "snippet",
+        "source type"
+    ],
+
+    dependencies:[
+        "DDGS",
+        "LRU cache"
+    ],
+
+    connections:[
+        "backend/main.py",
+        "retrieval/rag_ranker.py"
+    ],
+
+    github:"retrieval/search_engine.py"
+
+},
+
+
+"rag":{
+
+    title:"rag_ranker.py",
+
+    path:"retrieval/rag_ranker.py",
+
+    purpose:
+        "Ranks retrieved evidence according to semantic similarity with the claim.",
+
+    functions:[
+        "retrieve_evidence(claim, documents, top_k)"
+    ],
+
+    input:"Claim + search documents",
+
+    output:"Top-ranked evidence with similarity scores",
+
+    dependencies:[
+        "SentenceTransformer",
+        "FAISS",
+        "NumPy"
+    ],
+
+    connections:[
+        "backend/main.py",
+        "retrieval/search_engine.py",
+        "ai/verifier.py"
+    ],
+
+    github:"retrieval/rag_ranker.py"
+
+},
+
+
+"source":{
+
+    title:"source_ranker.py",
+
+    path:"retrieval/source_ranker.py",
+
+    purpose:
+        "Adjusts evidence scores according to source credibility tiers such as official, fact-checking, news and unknown sources.",
+
+    functions:[
+        "apply_credibility_weighting(ranked_evidence)"
+    ],
+
+    input:"RAG-ranked evidence",
+
+    output:"Credibility-weighted evidence",
+
+    dependencies:[
+        "Credibility weight table"
+    ],
+
+    note:
+        "This module exists in the repository but backend/main.py currently does not import or call it. The diagram therefore shows this connection as optional/dashed.",
+
+    github:"retrieval/source_ranker.py"
+
+},
+
+
+"verifier":{
+
+    title:"verifier.py",
+
+    path:"ai/verifier.py",
+
+    purpose:
+        "Compares the claim against the supplied evidence using an OpenAI model and produces the final fact-checking assessment.",
+
+    functions:[
+        "verify_claim(claim, evidence)"
+    ],
+
+    input:"Claim + ranked evidence",
+
+    output:[
+        "SUPPORTED",
+        "REFUTED",
+        "CONFLICTING",
+        "INSUFFICIENT_EVIDENCE",
+        "confidence",
+        "reason"
+    ],
+
+    dependencies:[
+        "OpenAI API",
+        "python-dotenv"
+    ],
+
+    connections:[
+        "backend/main.py",
+        "retrieval/rag_ranker.py"
+    ],
+
+    github:"ai/verifier.py"
+
+},
+
+
+"benchmark":{
+
+    title:"run_benchmark.py",
+
+    path:"evaluation/run_benchmark.py",
+
+    purpose:
+        "Runs an offline benchmark against the backend API and calculates classification accuracy.",
+
+    functions:[
+        "evaluate_pipeline(dataset_path)"
+    ],
+
+    input:"tests/test_claims.json",
+
+    output:[
+        "Accuracy",
+        "Classification report",
+        "Predictions"
+    ],
+
+    connections:[
+        "backend/main.py",
+        "tests/test_claims.json"
+    ],
+
+    github:"evaluation/run_benchmark.py"
+
+},
+
+
+"api-doc":{
+
+    title:"api.md",
+
+    path:"docs/api.md",
+
+    purpose:
+        "Documents the application's API.",
+
+    functions:[
+        "API reference",
+        "Endpoint documentation"
+    ],
+
+    github:"docs/api.md"
+
+},
+
+
+"api-txt":{
+
+    title:"api.txt",
+
+    path:"docs/api.txt",
+
+    purpose:
+        "Text-based API documentation / notes.",
+
+    functions:[
+        "API reference notes"
+    ],
+
+    github:"docs/api.txt"
+
+},
+
+
+"tests":{
+
+    title:"test_claims.json",
+
+    path:"tests/test_claims.json",
+
+    purpose:
+        "Contains benchmark claims and expected verdicts used by the evaluation pipeline.",
+
+    functions:[
+        "Store test claims",
+        "Store expected verdicts"
+    ],
+
+    connections:[
+        "evaluation/run_benchmark.py"
+    ],
+
+    github:"tests/test_claims.json"
+
+},
+
+
+"requirements":{
+
+    title:"requirements.txt",
+
+    path:"requirements.txt",
+
+    purpose:
+        "Defines Python dependencies required by the project.",
+
+    functions:[
+        "Dependency installation",
+        "Environment reproducibility"
+    ],
+
+    github:"requirements.txt"
+
+},
+
+
+"docker":{
+
+    title:"docker-compose.yml",
+
+    path:"docker-compose.yml",
+
+    purpose:
+        "Coordinates the project's containerized frontend and backend services.",
+
+    functions:[
+        "Define services",
+        "Configure service startup",
+        "Connect containers"
+    ],
+
+    github:"docker-compose.yml"
+
+},
+
+
+"docker-backend":{
+
+    title:"Dockerfile.backend",
+
+    path:"Dockerfile.backend",
+
+    purpose:
+        "Defines the backend container environment.",
+
+    functions:[
+        "Build backend image",
+        "Install dependencies",
+        "Configure backend startup"
+    ],
+
+    github:"Dockerfile.backend"
+
+},
+
+
+"docker-frontend":{
+
+    title:"Dockerfile.frontend",
+
+    path:"Dockerfile.frontend",
+
+    purpose:
+        "Defines the frontend container environment.",
+
+    functions:[
+        "Build frontend image",
+        "Install dependencies",
+        "Configure frontend startup"
+    ],
+
+    github:"Dockerfile.frontend"
+
+},
+
+
+"bat":{
+
+    title:"Truth_Intelligence.bat",
+
+    path:"Truth_Intelligence.bat",
+
+    purpose:
+        "Windows launcher used to start the project's frontend and backend locally.",
+
+    functions:[
+        "Launch backend",
+        "Launch frontend"
+    ],
+
+    github:"Truth_Intelligence.bat"
+
+},
+
+
+"env":{
+
+    title:".env.example",
+
+    path:".env.example",
+
+    purpose:
+        "Template for environment variables required by the application.",
+
+    functions:[
+        "Document required environment variables",
+        "Configure API credentials"
+    ],
+
+    github:".env.example"
+
+},
+
+
+"readme":{
+
+    title:"README.md",
+
+    path:"README.md",
+
+    purpose:
+        "Main project documentation containing the project's purpose, architecture, setup instructions and technology stack.",
+
+    functions:[
+        "Project overview",
+        "Architecture documentation",
+        "Installation instructions",
+        "Usage instructions"
+    ],
+
+    github:"README.md"
+
+},
+
+
+"output":{
+
+    title:"Verification Result",
+
+    path:"System Output",
+
+    purpose:
+        "Final response returned by the backend after evidence retrieval and AI verification.",
+
+    functions:[
+        "Return verdict",
+        "Return confidence",
+        "Return explanation",
+        "Return evidence"
+    ],
+
+    output:[
+        "Verdict",
+        "Confidence",
+        "Reason",
+        "Evidence"
+    ]
+
+}
+
+};
+
+
+/* =====================================================
+   PANEL
+===================================================== */
+
+function showInfo(id){
+
+    const item = files[id];
+
+    if(!item) return;
+
+
+    let html = `
+
+        <div class="panel-header">
+
+            <h2>${item.title}</h2>
+
+            <div class="path">
+                ${item.path}
+            </div>
+
+        </div>
+
+        <div class="panel-body">
+
+            <div class="section">
+
+                <div class="section-title">
+                    Purpose
+                </div>
+
+                <p>
+                    ${item.purpose}
+                </p>
+
+            </div>
+
+    `;
+
+
+    if(item.functions){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Functions / Responsibilities
+                </div>
+
+        `;
+
+
+        item.functions.forEach(fn=>{
+
+            html += `
+                <div class="function">
+                    ${fn}
+                </div>
+            `;
+
+        });
+
+
+        html += `</div>`;
+
+    }
+
+
+    if(item.input){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Input
+                </div>
+
+                <p>
+                    ${item.input}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(item.output){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Output
+                </div>
+
+                <ul>
+
+        `;
+
+
+        const outputs =
+            Array.isArray(item.output)
+            ? item.output
+            : [item.output];
+
+
+        outputs.forEach(x=>{
+
+            html += `<li>${x}</li>`;
+
+        });
+
+
+        html += `
+
+                </ul>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(item.dependencies){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Dependencies
+                </div>
+
+                <ul>
+
+        `;
+
+
+        item.dependencies.forEach(x=>{
+
+            html += `<li>${x}</li>`;
+
+        });
+
+
+        html += `
+
+                </ul>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(item.connections){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Connected Files
+                </div>
+
+                <ul>
+
+        `;
+
+
+        item.connections.forEach(x=>{
+
+            html += `<li>${x}</li>`;
+
+        });
+
+
+        html += `
+
+                </ul>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(item.note){
+
+        html += `
+
+            <div class="section">
+
+                <div class="section-title">
+                    Architecture Note
+                </div>
+
+                <p>
+                    ${item.note}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(item.github){
+
+        html += `
+
+            <a
+                class="github"
+                href="${BASE_REPO + item.github}"
+                target="_blank">
+
+                View File on GitHub ↗
+
+            </a>
+
+        `;
+
+    }
+
+
+    html += `</div>`;
+
+
+    document.getElementById("panelContent").innerHTML = html;
+
+    document.getElementById("overlay").style.display = "block";
+
+    document.getElementById("panel").classList.add("open");
+
+}
+
+
+function closePanel(){
+
+    document.getElementById("panel").classList.remove("open");
+
+    document.getElementById("overlay").style.display = "none";
+
+}
+
+
+/* =====================================================
+   PAN + ZOOM
+===================================================== */
+
+const graph =
+    document.getElementById("graph");
+
+const viewport =
+    document.getElementById("viewport");
+
+
+let scale = 0.72;
+
+let posX = 0;
+
+let posY = 20;
+
+let dragging = false;
+
+let startX = 0;
+
+let startY = 0;
+
+
+function updateTransform(){
+
+    graph.style.transform =
+        `translate(${posX}px,${posY}px) scale(${scale})`;
+
+}
+
+
+viewport.addEventListener(
+    "mousedown",
+    function(e){
+
+        if(e.target.closest(".node")){
+            return;
+        }
+
+        dragging = true;
+
+        viewport.classList.add("dragging");
+
+        startX = e.clientX - posX;
+
+        startY = e.clientY - posY;
+
+    }
+);
+
+
+window.addEventListener(
+    "mousemove",
+    function(e){
+
+        if(!dragging) return;
+
+        posX = e.clientX - startX;
+
+        posY = e.clientY - startY;
+
+        updateTransform();
+
+    }
+);
+
+
+window.addEventListener(
+    "mouseup",
+    function(){
+
+        dragging = false;
+
+        viewport.classList.remove("dragging");
+
+    }
+);
+
+
+viewport.addEventListener(
+    "wheel",
+    function(e){
+
+        e.preventDefault();
+
+        if(e.deltaY < 0){
+
+            scale *= 1.08;
+
+        }else{
+
+            scale *= 0.92;
+
+        }
+
+        scale =
+            Math.max(.35,Math.min(1.8,scale));
+
+        updateTransform();
+
+    },
+    {passive:false}
+);
+
+
+function zoomIn(){
+
+    scale *= 1.15;
+
+    scale =
+        Math.min(1.8,scale);
+
+    updateTransform();
+
+}
+
+
+function zoomOut(){
+
+    scale *= .87;
+
+    scale =
+        Math.max(.35,scale);
+
+    updateTransform();
+
+}
+
+
+function resetGraph(){
+
+    scale = .72;
+
+    posX = 0;
+
+    posY = 20;
+
+    updateTransform();
+
+}
+
+
+function fitGraph(){
+
+    const vw =
+        viewport.clientWidth;
+
+    const vh =
+        viewport.clientHeight;
+
+
+    const graphWidth = 1600;
+
+    const graphHeight = 1400;
+
+
+    scale =
+        Math.min(
+            vw / graphWidth,
+            vh / graphHeight
+        ) * .92;
+
+
+    scale =
+        Math.max(.35,Math.min(1.2,scale));
+
+
+    posX =
+        (vw - graphWidth * scale) / 2;
+
+    posY =
+        (vh - graphHeight * scale) / 2;
+
+
+    updateTransform();
+
+}
+
+
+/* =====================================================
+   DIRECTION BUTTON
+===================================================== */
+
+let direction =
+    "TB";
+
+
+function toggleDirection(){
+
+    direction =
+        direction === "TB"
+        ? "LR"
+        : "TB";
+
+
+    const button =
+        document.querySelector(
+            '.controls button:last-child'
+        );
+
+
+    button.textContent =
+        direction === "TB"
+        ? "Top to Bottom"
+        : "Left to Right";
+
+
+    /*
+       The current diagram is intentionally
+       top-to-bottom because that matches the
+       architecture reference you provided.
+
+       The button is reserved for the future
+       horizontal layout.
+    */
+
+}
+
+
+/* INITIAL */
+
+window.addEventListener(
+    "load",
+    function(){
+
+        fitGraph();
+
+    }
+);
+
+
+</script>
+
+</body>
+
+</html>
