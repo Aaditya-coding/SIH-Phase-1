@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from celery.result import AsyncResult
@@ -6,6 +6,9 @@ from backend.celery_app import celery_app
 from backend.tasks import run_claim_analysis_task
 import sys
 import os
+import io
+import pytesseract
+from PIL import Image
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,7 +24,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 app = FastAPI(title="Truth Intelligence API", version="1.0")
 
-# Enable CORS for frontend connectivity (Pawni's UI layer)
+# Enable CORS for frontend connectivity
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins for local development
@@ -43,13 +46,26 @@ class AnalyzeRequest(BaseModel):
 
 @app.post("/analyze")
 def submit_claim_analysis(request: AnalyzeRequest):
-    """Offloads claim processing to a background Celery worker via Redis, supporting Alabhya's UI payload."""
+    """Offloads claim processing to a background Celery worker via Redis."""
     task = run_claim_analysis_task.delay(request.content)
     return {
         "task_id": task.id,
         "status": "QUEUED",
         "message": "Claim analysis successfully enqueued for processing."
     }
+
+@app.post("/ocr")
+async def extract_text_from_image(file: UploadFile = File(...)):
+    """Extracts text strings from uploaded screenshots or images via Tesseract OCR."""
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        extracted_text = pytesseract.image_to_string(image).strip()
+        return {
+            "extracted_text": extracted_text if extracted_text else "No readable text detected in image."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
 
 @app.get("/task/{task_id}")
 async def get_task_status(task_id: str):

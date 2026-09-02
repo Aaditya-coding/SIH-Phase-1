@@ -17,7 +17,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Initialize OpenAI client safely if key is present
 openai_client = openai.OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-@celery_app.task(bind=True)
+# EXPLICITLY NAME THE TASK HERE TO PREVENT REGISTRATION ERRORS
+@celery_app.task(bind=True, name="backend.tasks.run_claim_analysis_task")
 def run_claim_analysis_task(self, claim: str):
     """Background task powered by OpenAI and dotenv for dynamic, professional intelligence generation."""
     try:
