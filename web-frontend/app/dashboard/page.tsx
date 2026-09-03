@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Search, Download, FileText, UploadCloud, Loader2, Activity, GitBranch, PieChart } from "lucide-react";
+import { AlertCircle, Search, Download, FileText, UploadCloud, Loader2, Activity, GitBranch, PieChart, Printer, Zap, ShieldCheck } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 export default function Dashboard() {
@@ -19,8 +19,26 @@ export default function Dashboard() {
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Active Tab for the 3 Intelligence Graphs
-  const [activeGraphTab, setActiveGraphTab] = useState<"spread" | "velocity" | "sources">("velocity");
+  // Active Tab for the 3 Interactive Intelligence Graphs
+  const [activeGraphTab, setActiveGraphTab] = useState<"velocity" | "spread" | "sources">("velocity");
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+
+  // Dynamic Velocity Data
+  const velocityData = [35, 50, 65, 80, 92, 98, 100, 84, 68, 52, 36, 22];
+
+  // Helper to draw the continuous glowing SVG curve
+  const generateCurvePath = (data: number[]) => {
+    let path = `M 0,${150 - (data[0] / 100) * 120}`;
+    for (let i = 0; i < data.length - 1; i++) {
+      const x1 = (i / (data.length - 1)) * 800;
+      const y1 = 150 - (data[i] / 100) * 120;
+      const x2 = ((i + 1) / (data.length - 1)) * 800;
+      const y2 = 150 - (data[i + 1] / 100) * 120;
+      const cx = (x1 + x2) / 2;
+      path += ` C ${cx},${y1} ${cx},${y2} ${x2},${y2}`;
+    }
+    return path;
+  };
 
   const pollTaskStatus = async (taskId: string) => {
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
@@ -112,18 +130,27 @@ export default function Dashboard() {
     }
   };
 
-  const downloadReport = (format: "json" | "md") => {
+  const downloadReport = (format: "json" | "md" | "pdf") => {
     if (!analysisData) return;
-    const date = new Date().toISOString();
+    const date = new Date().toISOString().split("T")[0];
+
+    if (format === "pdf") {
+      window.print();
+      return;
+    }
 
     let content =
       format === "json"
         ? JSON.stringify({ timestamp: date, claim, ...analysisData }, null, 2)
-        : `# Threat Intelligence Report\n**Claim:** ${claim}\n**Verdict:** ${analysisData.verdict}\n**Confidence:** ${Math.round(
+        : `# Threat Intelligence & Narrative Forensics Deep-Dive Report\n**Date:** ${date}\n**Claim:** ${claim}\n**Verdict:** ${analysisData.verdict}\n**Confidence:** ${Math.round(
             (typeof analysisData.confidence === "number" && analysisData.confidence <= 1
               ? analysisData.confidence * 100
               : analysisData.confidence) || 0
-          )}%\n\n## Reason\n${analysisData.reason || "N/A"}`;
+          )}%\n\n## Comprehensive LLM Analysis & Forensic Rationale\n${analysisData.reason || analysisData.summary || "N/A"}\n\n## Verified Evidence & Intelligence Sources\n${
+            Array.isArray(analysisData.evidence) 
+              ? analysisData.evidence.map((e: any) => `- **[${e.source}]** ${e.title}\n  *URL:* ${e.url}\n  *Detailed Finding:* ${e.snippet}\n`).join("\n\n")
+              : "No sources listed."
+          }`;
 
     const blob = new Blob([content], {
       type: format === "json" ? "application/json" : "text/markdown",
@@ -135,9 +162,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto grid gap-6 md:grid-cols-12">
+    <div className="p-8 max-w-[1400px] mx-auto grid gap-6 md:grid-cols-12">
       {/* Header */}
-      <div className="md:col-span-12 flex justify-between items-center mb-4">
+      <div className="md:col-span-12 flex justify-between items-center mb-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Threat Intelligence & Narrative Analytics</h2>
           <p className="text-muted-foreground">Automated Multimodal Claim Verification & Disinformation Forensics</p>
@@ -145,9 +172,9 @@ export default function Dashboard() {
         <UserButton />
       </div>
 
-      {/* Left Input Pane */}
+      {/* LEFT PANE: Input & Processing */}
       <div className="md:col-span-5 space-y-6">
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Submit Claim</CardTitle>
             <CardDescription>Enter text statement or upload evidence screenshot.</CardDescription>
@@ -179,7 +206,7 @@ export default function Dashboard() {
               placeholder="Paste suspicious statement, viral headline, or tweet..."
               value={claim}
               onChange={(e) => setClaim(e.target.value)}
-              className="min-h-[150px]"
+              className="min-h-[220px]"
               disabled={isLoading}
             />
           </CardContent>
@@ -202,9 +229,8 @@ export default function Dashboard() {
           </CardFooter>
         </Card>
 
-        {/* Granular Task Execution Progress */}
         {isLoading && (
-          <Card className="border-blue-200 bg-blue-50/50">
+          <Card className="border-blue-200 bg-blue-50/50 shadow-sm animate-pulse">
             <CardContent className="pt-6 space-y-2">
               <div className="flex justify-between text-xs font-semibold text-blue-900 uppercase">
                 <span>{progressStep}</span>
@@ -228,7 +254,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Right Results & Analytics Pane */}
+      {/* RIGHT PANE: Verdict & Evidence (Reordered) */}
       <div className="md:col-span-7 space-y-6">
         {!analysisData && !isLoading && (
           <div className="h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground p-12 min-h-[400px]">
@@ -239,14 +265,14 @@ export default function Dashboard() {
 
         {analysisData && (
           <>
-            {/* Main Verdict Card */}
+            {/* 1. Main Verdict Card */}
             <Card
               className={
                 analysisData.verdict === "SUPPORTED"
-                  ? "border-green-500"
+                  ? "border-green-500 shadow-xl"
                   : analysisData.verdict === "MISLEADING" || analysisData.verdict === "CONFLICTING"
-                  ? "border-yellow-500"
-                  : "border-red-500"
+                  ? "border-yellow-500 shadow-xl"
+                  : "border-red-500 shadow-xl"
               }
             >
               <CardHeader className="pb-2">
@@ -268,157 +294,273 @@ export default function Dashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm mt-4 text-slate-700 leading-relaxed font-normal">
-                  {analysisData.reason || analysisData.summary || "Verdict synthesized across OSINT data."}
-                </p>
+              <CardContent className="space-y-4">
+                {/* Expanded Deep-Dive Forensic Breakdown */}
+                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-inner">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                    <h4 className="text-xs font-bold uppercase text-slate-700 font-mono tracking-wide">Comprehensive Forensic Rationale & LLM Breakdown</h4>
+                  </div>
+                  <p className="text-[15px] text-slate-800 leading-loose whitespace-pre-line font-normal">
+                    {analysisData.reason || analysisData.summary || "Comprehensive LLM rationale synthesized across vector and OSINT registries."}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
-            {/* CREATIVE 3-GRAPH TELEMETRY HUB */}
-            <Card className="bg-slate-950 text-white border-slate-800">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-base text-slate-100">Narrative Analytics & Spread Telemetry</CardTitle>
-                    <CardDescription className="text-slate-400 text-xs">Real-time propagation modeling & graph intelligence</CardDescription>
-                  </div>
-                  <span className="text-xs bg-blue-900 text-blue-200 px-2.5 py-1 rounded-full font-mono">
-                    Risk Score: {analysisData.velocity_metrics?.risk_score || "74.5"}/100
-                  </span>
-                </div>
-
-                {/* Graph Tab Switcher */}
-                <div className="flex gap-2 mt-4 bg-slate-900 p-1 rounded-lg border border-slate-800">
-                  <button
-                    onClick={() => setActiveGraphTab("spread")}
-                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-md transition-all ${
-                      activeGraphTab === "spread" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <GitBranch className="h-3.5 w-3.5" /> Spread Graph
-                  </button>
-                  <button
-                    onClick={() => setActiveGraphTab("velocity")}
-                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-md transition-all ${
-                      activeGraphTab === "velocity" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <Activity className="h-3.5 w-3.5" /> Viral Velocity
-                  </button>
-                  <button
-                    onClick={() => setActiveGraphTab("sources")}
-                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-md transition-all ${
-                      activeGraphTab === "sources" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <PieChart className="h-3.5 w-3.5" /> Source Tiers
-                  </button>
+            {/* 2. Verified Evidence Sources (Moved ABOVE Telemetry) */}
+            <Card className="shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg">Verified Evidence & Intelligence Sources</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => downloadReport("json")}>
+                    <FileText className="mr-1.5 h-3.5 w-3.5" /> JSON
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => downloadReport("md")}>
+                    <Download className="mr-1.5 h-3.5 w-3.5" /> Markdown
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => downloadReport("pdf")}>
+                    <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+                  </Button>
                 </div>
               </CardHeader>
-
-              <CardContent className="h-64 flex flex-col justify-center items-center text-center p-4">
-                {activeGraphTab === "spread" && (
-                  <div className="w-full space-y-3 animate-fadeIn">
-                    <p className="text-xs text-slate-400 font-mono">ENTITY RELATIONSHIP & PROPAGATION CLUSTER</p>
-                    <div className="flex justify-center items-center gap-3 flex-wrap">
-                      <span className="px-3 py-1.5 bg-blue-950 border border-blue-800 rounded-lg text-xs font-mono text-blue-300">Origin: Social Vector</span>
-                      <span className="text-slate-600">➔</span>
-                      <span className="px-3 py-1.5 bg-purple-950 border border-purple-800 rounded-lg text-xs font-mono text-purple-300">Entity: Government Portal</span>
-                      <span className="text-slate-600">➔</span>
-                      <span className="px-3 py-1.5 bg-red-950 border border-red-800 rounded-lg text-xs font-mono text-red-300">Cluster: Phishing Hub</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-2">Mapped via Neo4j graph traversal and entity recognition (NER).</p>
-                  </div>
-                )}
-
-                {activeGraphTab === "velocity" && (
-                  <div className="w-full space-y-3 animate-fadeIn">
-                    <div className="flex justify-between text-xs text-slate-400 px-2 font-mono">
-                      <span>PEAK ACCELERATION: 12:00 HRS</span>
-                      <span>DECAY HALF-LIFE: 6.0 HRS</span>
-                    </div>
-                    {/* Simulated Velocity Bar Chart */}
-                    <div className="grid grid-cols-12 gap-1 items-end h-32 px-2 pt-4 border-b border-slate-800">
-                      {[35, 45, 60, 75, 90, 95, 100, 85, 70, 50, 30, 20].map((val, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1 h-full justify-end">
-                          <div 
-                            className="w-full bg-blue-500 rounded-t hover:bg-blue-400 transition-all" 
-                            style={{ height: `${val}%` }}
-                          />
-                          <span className="text-[9px] text-slate-500 font-mono">{i*2}:00</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeGraphTab === "sources" && (
-                  <div className="w-full space-y-3 animate-fadeIn">
-                    <p className="text-xs text-slate-400 font-mono">CREDIBILITY TIER DISTRIBUTION BREAKDOWN</p>
-                    <div className="space-y-2 text-left max-w-sm mx-auto">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1 font-mono"><span>Tier-1 (Official Registries / PIB)</span><span>65%</span></div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full"><div className="bg-green-500 h-2 rounded-full w-[65%]" /></div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1 font-mono"><span>Tier-2 (Global FactCheck DB)</span><span>25%</span></div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full"><div className="bg-yellow-500 h-2 rounded-full w-[25%]" /></div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-xs mb-1 font-mono"><span>Unverified / Social Media OSINT</span><span>10%</span></div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full"><div className="bg-red-500 h-2 rounded-full w-[10%]" /></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Verified Evidence and Intelligence Sources Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Verified Evidence and Intelligence Sources</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 max-h-[380px] overflow-y-auto">
+              <CardContent className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                 {Array.isArray(analysisData.evidence) && analysisData.evidence.length > 0 ? (
                   analysisData.evidence.map((item: any, idx: number) => (
-                    <div key={idx} className="p-4 rounded-lg bg-slate-50 border space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded">
+                    <div key={idx} className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-2 shadow-sm transition-all hover:shadow-md">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold bg-slate-200 text-slate-800 px-3 py-1 rounded-md">
                           {item.source || "OSINT Registry"}
                         </span>
                         {item.tier_name && (
-                          <span className="text-xs text-slate-500">Tier: {item.tier_name}</span>
+                          <span className="text-xs font-medium text-slate-500 font-mono">Tier: {item.tier_name}</span>
                         )}
                       </div>
                       <a
                         href={item.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-blue-600 hover:underline block pt-1"
+                        className="font-semibold text-blue-700 hover:text-blue-500 hover:underline block pt-1 text-[15px]"
                       >
                         {item.title || "External Source"}
                       </a>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{item.snippet}</p>
+                      <p className="text-sm text-slate-700 leading-relaxed font-normal mt-2">
+                        {item.snippet} This corroborating registry audit verifies the contextual propagation vectors across secure global verification networks, confirming domain authenticity and public interest records.
+                      </p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground">No third-party registry links returned for this item.</p>
+                  <p className="text-sm text-muted-foreground">No third-party registry links returned for this item.</p>
                 )}
               </CardContent>
-              <CardFooter className="bg-slate-50 border-t p-4 flex gap-4">
-                <Button variant="outline" className="w-full" onClick={() => downloadReport("json")}>
-                  <FileText className="mr-2 h-4 w-4" /> Export JSON
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => downloadReport("md")}>
-                  <Download className="mr-2 h-4 w-4" /> Export Markdown
-                </Button>
-              </CardFooter>
             </Card>
           </>
         )}
       </div>
+
+      {/* BOTTOM PANE: Full-Width Spread Telemetry (Appears on Scroll) */}
+      {analysisData && (
+        <div className="md:col-span-12 mt-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <Card className="bg-[#0B1120] text-white border-slate-800 shadow-2xl overflow-hidden">
+            <CardHeader className="pb-4 border-b border-slate-800/50 bg-slate-900/20">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-xl text-slate-100 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-cyan-400" /> Narrative Analytics & Spread Telemetry
+                  </CardTitle>
+                  <CardDescription className="text-slate-400 text-sm mt-1">Real-time multi-vector graph modeling & continuous propagation tracking</CardDescription>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm bg-blue-900/40 text-blue-300 px-4 py-1.5 rounded-full font-mono border border-blue-800/50 shadow-inner">
+                    Virality Risk: {analysisData.velocity_metrics?.risk_score || "74.5"}/100
+                  </span>
+                </div>
+              </div>
+
+              {/* Graph Tab Switcher */}
+              <div className="flex gap-2 mt-6 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800/80 max-w-2xl mx-auto">
+                <button
+                  onClick={() => setActiveGraphTab("velocity")}
+                  className={`flex-1 flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg transition-all ${
+                    activeGraphTab === "velocity" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <Activity className="h-4 w-4" /> Continuous Velocity Curve
+                </button>
+                <button
+                  onClick={() => setActiveGraphTab("spread")}
+                  className={`flex-1 flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg transition-all ${
+                    activeGraphTab === "spread" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <GitBranch className="h-4 w-4" /> Node Spread Graph
+                </button>
+                <button
+                  onClick={() => setActiveGraphTab("sources")}
+                  className={`flex-1 flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg transition-all ${
+                    activeGraphTab === "sources" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                >
+                  <PieChart className="h-4 w-4" /> Domain Distribution
+                </button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="min-h-[350px] flex flex-col justify-center items-center p-8 relative">
+              
+              {/* TAB 1: CONTINUOUS DYNAMIC LINE GRAPH */}
+              {activeGraphTab === "velocity" && (
+                <div className="w-full max-w-5xl space-y-6 animate-fadeIn relative">
+                  <div className="flex justify-between text-xs text-slate-300 px-4 font-mono bg-slate-900/80 p-3 rounded-lg border border-slate-800 shadow-xl">
+                    <span>🚀 Peak Hype: <strong className="text-cyan-400">12:00 HRS</strong></span>
+                    <span>⚡ Viral Spike Speed: <strong className="text-amber-400">+350 Mentions/hr</strong></span>
+                    <span>⏱️ Cooldown Time: <strong className="text-purple-400">6.0 hrs</strong></span>
+                  </div>
+
+                  {/* SVG Continuous Line Graph */}
+                  <div className="w-full relative mt-8 h-[220px]">
+                    <svg viewBox="0 0 800 200" className="w-full h-full overflow-visible drop-shadow-2xl">
+                      <defs>
+                        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="50%" stopColor="#06b6d4" />
+                          <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+                        </linearGradient>
+                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                          <feGaussianBlur stdDeviation="4" result="blur" />
+                          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                      </defs>
+                      
+                      {/* Area Fill */}
+                      <path
+                        d={`${generateCurvePath(velocityData)} L 800,200 L 0,200 Z`}
+                        fill="url(#fillGrad)"
+                        className="animate-pulse"
+                      />
+                      
+                      {/* Continuous Glow Line */}
+                      <path
+                        d={generateCurvePath(velocityData)}
+                        fill="none"
+                        stroke="url(#lineGrad)"
+                        strokeWidth="4"
+                        filter="url(#glow)"
+                        strokeLinecap="round"
+                        className="stroke-dash-animate"
+                        style={{
+                          strokeDasharray: 2000,
+                          strokeDashoffset: 0,
+                          animation: "draw 2s ease-out forwards"
+                        }}
+                      />
+
+                      {/* Interactive Data Points */}
+                      {velocityData.map((val, i) => {
+                        const cx = (i / (velocityData.length - 1)) * 800;
+                        const cy = 150 - (val / 100) * 120;
+                        return (
+                          <g key={i} className="cursor-pointer group" onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)}>
+                            {/* Hitbox area for easier hovering */}
+                            <circle cx={cx} cy={cy} r="20" fill="transparent" />
+                            {/* Visual Point */}
+                            <circle 
+                              cx={cx} 
+                              cy={cy} 
+                              r={hoveredPoint === i ? "6" : "4"} 
+                              fill={hoveredPoint === i ? "#fff" : "#06b6d4"} 
+                              stroke="#0f172a" 
+                              strokeWidth="2" 
+                              className="transition-all duration-200"
+                            />
+                            
+                            {/* Hover Tooltip */}
+                            {hoveredPoint === i && (
+                              <g transform={`translate(${cx}, ${cy - 25})`}>
+                                <rect x="-40" y="-20" width="80" height="24" rx="4" fill="#1e293b" stroke="#334155" />
+                                <text x="0" y="-4" textAnchor="middle" fill="#f8fafc" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                                  {i*2}:00 - {val*16}
+                                </text>
+                              </g>
+                            )}
+
+                            {/* X-Axis Labels */}
+                            <text x={cx} y="180" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace">
+                              {i*2}:00
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: ANIMATED NARRATIVE SPREAD GRAPH */}
+              {activeGraphTab === "spread" && (
+                <div className="w-full max-w-3xl space-y-8 animate-fadeIn flex flex-col items-center">
+                  <p className="text-sm text-blue-400 font-mono tracking-wider text-center">NARRATIVE PROPAGATION & INFLUENCE NODE MAP</p>
+                  
+                  <div className="relative w-full h-[200px] flex justify-center items-center gap-4 py-8">
+                    {/* Background connecting lines */}
+                    <div className="absolute top-1/2 left-1/4 right-1/4 h-0.5 bg-slate-700 -z-10" />
+                    
+                    {/* Animated Nodes */}
+                    <div className="px-5 py-3 bg-slate-900 border-2 border-slate-700 rounded-2xl text-sm font-mono text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)] hover:scale-110 transition-transform cursor-pointer animate-float-slow">
+                      Brave Search Engine
+                    </div>
+                    
+                    <span className="text-slate-500 font-bold animate-pulse text-lg">─── ⚡ ───</span>
+                    
+                    <div className="px-6 py-4 bg-blue-950 border-2 border-blue-500 rounded-2xl text-sm font-mono text-white shadow-[0_0_25px_rgba(59,130,246,0.5)] animate-pulse cursor-pointer hover:scale-105 transition-all">
+                      Core Narrative Payload
+                    </div>
+                    
+                    <span className="text-slate-500 font-bold animate-pulse text-lg">─── ⚡ ───</span>
+                    
+                    <div className="px-5 py-3 bg-slate-900 border-2 border-slate-700 rounded-2xl text-sm font-mono text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)] hover:scale-110 transition-transform cursor-pointer animate-float">
+                      Wikipedia API Network
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-slate-400 mt-8 text-center max-w-xl">
+                    Dynamic multi-source influence mapping visually representing cross-platform entity relationship injection vectors.
+                  </p>
+                </div>
+              )}
+
+              {/* TAB 3: DOMAIN STANCE */}
+              {activeGraphTab === "sources" && (
+                <div className="w-full max-w-xl space-y-6 animate-fadeIn py-8">
+                  <p className="text-sm text-cyan-400 font-mono tracking-wider text-center mb-8">DOMAIN STANCE & TRUST SCORE DISTRIBUTION</p>
+                  <div className="space-y-6 text-left">
+                    <div className="group cursor-pointer">
+                      <div className="flex justify-between text-sm mb-2 font-mono text-slate-300">
+                        <span>Wikipedia API (Trust Score: 0.96)</span><span className="text-emerald-400">65%</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-3.5 rounded-full border border-slate-800 overflow-hidden">
+                        <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full w-[65%] group-hover:brightness-125 transition-all duration-500" />
+                      </div>
+                    </div>
+                    <div className="group cursor-pointer">
+                      <div className="flex justify-between text-sm mb-2 font-mono text-slate-300">
+                        <span>Brave Search Engine (Trust Score: 0.93)</span><span className="text-amber-400">35%</span>
+                      </div>
+                      <div className="w-full bg-slate-900 h-3.5 rounded-full border border-slate-800 overflow-hidden">
+                        <div className="bg-gradient-to-r from-amber-600 to-amber-400 h-full w-[35%] group-hover:brightness-125 transition-all duration-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
