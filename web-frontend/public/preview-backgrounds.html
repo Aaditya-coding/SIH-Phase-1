@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truth Intelligence — Live Background Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #101018;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #101018;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2D2D3F;
+      border-radius: 4px;
+    }
+    .glass-card {
+      background: rgba(28, 28, 40, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(45, 45, 63, 0.85);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+    .neon-border-cyan {
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+    .tab-active {
+      background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+  </style>
+</head>
+<body class="relative min-h-screen">
+
+  <!-- ========================================================= -->
+  <!-- BACKGROUND CONTAINERS                                     -->
+  <!-- ========================================================= -->
+  <div id="bg-container" class="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+    <!-- Canvas for dynamic rendering -->
+    <canvas id="main-canvas" class="absolute inset-0 w-full h-full"></canvas>
+    
+    <!-- Video element for Option 1 -->
+    <video
+      id="jellyfish-video"
+      autoPlay
+      loop
+      muted
+      playsInline
+      class="absolute inset-0 w-full h-full object-cover object-center opacity-45 filter brightness-105 contrast-125 transition-opacity duration-700 hidden"
+    >
+      <source src="/jellyfish.webm" type="video/webm" />
+      <source src="https://upload.wikimedia.org/wikipedia/commons/4/49/Spotted_jelly_(Mastigias_papua)_in_Vancouver.webm" type="video/webm" />
+    </video>
+
+    <!-- Deep Navy #1C1C28 Base Overlays -->
+    <div id="video-overlay" class="absolute inset-0 bg-[#101018]/50 mix-blend-multiply hidden"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#101018] via-[#1C1C28]/40 to-[#101018]/90 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#101018]/60 to-[#101018] pointer-events-none"></div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- TOP INTERACTIVE CONTROLS BAR (Always floating on top)     -->
+  <!-- ========================================================= -->
+  <header class="fixed top-0 left-0 right-0 z-50 p-4">
+    <div class="max-w-6xl mx-auto glass-card rounded-2xl p-3 px-5 flex flex-wrap items-center justify-between gap-4 border border-[#2D2D3F]">
+      
+      <!-- Logo / Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-500/30">
+          TI
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white leading-tight">Live Background Lab</h1>
+          <p class="text-[10px] font-mono text-cyan-400">Deep Navy Palette (#1C1C28)</p>
+        </div>
+      </div>
+
+      <!-- Background Switcher Buttons -->
+      <div class="flex flex-wrap items-center gap-1.5 bg-[#141420] p-1.5 rounded-xl border border-[#2D2D3F]">
+        <button
+          onclick="switchBg('jellyfish')"
+          id="btn-jellyfish"
+          class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all border border-transparent tab-active"
+        >
+          🪼 1. Oceanic Jellyfish
+        </button>
+
+        <button
+          onclick="switchBg('constellation')"
+          id="btn-constellation"
+          class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all border border-transparent"
+        >
+          🕸️ 2. Neural Threat Graph
+        </button>
+
+        <button
+          onclick="switchBg('cybergrid')"
+          id="btn-cybergrid"
+          class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all border border-transparent"
+        >
+          🌐 3. 3D Cyber Horizon Grid
+        </button>
+
+        <button
+          onclick="switchBg('waves')"
+          id="btn-waves"
+          class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all border border-transparent"
+        >
+          🌊 4. Diffusion Spline Waves
+        </button>
+
+        <button
+          onclick="switchBg('radar')"
+          id="btn-radar"
+          class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition-all border border-transparent"
+        >
+          🎯 5. Sonar Radar Telemetry
+        </button>
+      </div>
+
+      <!-- Overlay & Controls Toggle -->
+      <div class="flex items-center gap-2">
+        <button
+          onclick="toggleMockUI()"
+          id="btn-toggle-ui"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1C1C28] hover:bg-[#252538] text-slate-200 border border-[#2D2D3F] transition-all flex items-center gap-1.5"
+        >
+          <span id="ui-eye-icon">👁️</span>
+          <span id="ui-btn-text">Toggle Website Overlay</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================================= -->
+  <!-- MOCK WEBSITE OVERLAY (Toggleable to verify live fit)       -->
+  <!-- ========================================================= -->
+  <div id="mock-website-ui" class="relative z-10 pt-28 pb-20 px-6 max-w-5xl mx-auto flex flex-col items-center justify-center text-center transition-opacity duration-300">
+    
+    <!-- Info Badge -->
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2D2D3F] bg-[#1C1C28]/90 text-indigo-300 text-xs font-mono font-medium shadow-[0_0_20px_rgba(28,28,40,0.8)] mb-8 backdrop-blur-md">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+      <span id="active-bg-label">Theme 1: Deep Sea Jellyfish &amp; Luminescent Spores</span>
+    </div>
+
+    <!-- Main Headline -->
+    <h1 class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.08] max-w-4xl mb-6">
+      Automated{" "}
+      <span class="bg-gradient-to-r from-cyan-300 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
+        Fake News Detection
+      </span>{" "}
+      &amp; Diffusion Forensics
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed mb-10 font-normal">
+      A full-stack misinformation intelligence engine. Ingest claims via text or OCR, cross-verify against live OSINT registries via dual-threshold RAG, and model epidemiological narrative velocity in real time.
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center gap-4 mb-16">
+      <button class="h-13 px-8 py-3.5 text-sm sm:text-base font-bold bg-gradient-to-r from-indigo-500 via-blue-600 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white shadow-xl shadow-indigo-600/30 rounded-xl flex items-center gap-2">
+        <span>Apply This Background</span>
+        <span>→</span>
+      </button>
+
+      <button class="h-13 px-7 py-3.5 text-sm sm:text-base font-semibold border border-[#2D2D3F] bg-[#1C1C28]/90 hover:bg-[#262638] text-slate-200 rounded-xl backdrop-blur-md">
+        View Next Option
+      </button>
+    </div>
+
+    <!-- Live Metrics Row (Deep Navy #1C1C28 Card) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl p-4 sm:p-6 bg-[#1C1C28]/90 border border-[#2D2D3F] rounded-2xl backdrop-blur-md shadow-2xl">
+      <div class="p-3 text-center">
+        <div class="text-2xl sm:text-3xl font-black font-mono text-cyan-400">&lt; 1.8s</div>
+        <div class="text-xs text-slate-400 mt-1">Telemetry Latency</div>
+      </div>
+      <div class="p-3 text-center border-l border-[#2D2D3F]">
+        <div class="text-2xl sm:text-3xl font-black font-mono text-indigo-400">3-Tier</div>
+        <div class="text-xs text-slate-400 mt-1">OSINT Registries</div>
+      </div>
+      <div class="p-3 text-center border-l border-[#2D2D3F]">
+        <div class="text-2xl sm:text-3xl font-black font-mono text-amber-400">12-Point</div>
+        <div class="text-xs text-slate-400 mt-1">Diffusion Curve</div>
+      </div>
+      <div class="p-3 text-center border-l border-[#2D2D3F]">
+        <div class="text-2xl sm:text-3xl font-black font-mono text-emerald-400">100%</div>
+        <div class="text-xs text-slate-400 mt-1">Autonomous Flow</div>
+      </div>
+    </div>
+
+    <!-- 3 Forensic Pillars Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mt-8 text-left">
+      <div class="p-5 rounded-2xl bg-[#1C1C28]/85 border border-[#2D2D3F] backdrop-blur-md">
+        <div class="text-xl mb-2">🔍</div>
+        <h3 class="text-sm font-bold text-white mb-1">Multimodal OCR</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Extracts text and viral image screenshots instantly with Tesseract engine.</p>
+      </div>
+      <div class="p-5 rounded-2xl bg-[#1C1C28]/85 border border-[#2D2D3F] backdrop-blur-md">
+        <div class="text-xl mb-2">🛡️</div>
+        <h3 class="text-sm font-bold text-white mb-1">Dual-Threshold RAG</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Cross-verifies against Wikipedia, Brave Search, and global fact-check registers.</p>
+      </div>
+      <div class="p-5 rounded-2xl bg-[#1C1C28]/85 border border-[#2D2D3F] backdrop-blur-md">
+        <div class="text-xl mb-2">⚡</div>
+        <h3 class="text-sm font-bold text-white mb-1">Diffusion Modeling</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Computes 12-point epidemiological velocity spline curves in real time.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Floating Explanation Pill -->
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+    <div class="glass-card px-5 py-2.5 rounded-full text-xs font-mono text-slate-300 border border-[#2D2D3F] flex items-center gap-3 shadow-2xl">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+      <span id="bg-description">Move your mouse to interact with particles or switch backgrounds above.</span>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- JAVASCRIPT ANIMATION ENGINE FOR 5 LIVE BACKGROUNDS        -->
+  <!-- ========================================================= -->
+  <script>
+    const canvas = document.getElementById("main-canvas");
+    const ctx = canvas.getContext("2d");
+    const video = document.getElementById("jellyfish-video");
+    const videoOverlay = document.getElementById("video-overlay");
+
+    let currentMode = "jellyfish";
+    let animId = null;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    // Mouse coordinates for interactive reactions
+    const mouse = { x: width / 2, y: height / 2, isHovering: false };
+    window.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.isHovering = true;
+    });
+    window.addEventListener("mouseleave", () => {
+      mouse.isHovering = false;
+    });
+
+    window.addEventListener("resize", () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initCurrentBackground();
+    });
+
+    // =========================================================
+    // 1. OCEANIC JELLYFISH PARTICLES (Option 1)
+    // =========================================================
+    let spores = [];
+    function initJellyfish() {
+      spores = [];
+      const colors = ["#00F0FF", "#818CF8", "#A78BFA", "#38BDF8", "#C084FC"];
+      for (let i = 0; i < 50; i++) {
+        spores.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 2.5 + 0.8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -(Math.random() * 0.45 + 0.15),
+          alpha: Math.random() * 0.6 + 0.25,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function drawJellyfish() {
+      ctx.clearRect(0, 0, width, height);
+
+      spores.forEach((p) => {
+        p.phase += 0.02;
+        p.x += p.vx + Math.sin(p.phase) * 0.3;
+        p.y += p.vy;
+
+        if (p.y < -10) { p.y = height + 10; p.x = Math.random() * width; }
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+
+        const pulseAlpha = p.alpha * (0.6 + 0.4 * Math.sin(p.phase));
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = pulseAlpha * 0.25;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = pulseAlpha;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+      });
+
+      ctx.globalAlpha = 1.0;
+    }
+
+    // =========================================================
+    // 2. NEURAL THREAT CONSTELLATION GRAPH (Option 2)
+    // =========================================================
+    let nodes = [];
+    function initConstellation() {
+      nodes = [];
+      const nodeCount = Math.min(Math.floor(width / 16), 85);
+      for (let i = 0; i < nodeCount; i++) {
+        nodes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7,
+          radius: Math.random() * 2.2 + 1.2,
+          color: Math.random() > 0.4 ? "#00F0FF" : (Math.random() > 0.5 ? "#818CF8" : "#C084FC")
+        });
+      }
+    }
+
+    function drawConstellation() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Deep Navy background ambient glow
+      const radial = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, width * 0.7);
+      radial.addColorStop(0, "rgba(28, 28, 40, 0.4)");
+      radial.addColorStop(1, "rgba(16, 16, 24, 0.8)");
+      ctx.fillStyle = radial;
+      ctx.fillRect(0, 0, width, height);
+
+      // Connect nodes
+      const maxDistance = 125;
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        a.x += a.vx;
+        a.y += a.vy;
+
+        if (a.x < 0 || a.x > width) a.vx *= -1;
+        if (a.y < 0 || a.y > height) a.vy *= -1;
+
+        // Mouse repelling/connection
+        if (mouse.isHovering) {
+          const dxm = mouse.x - a.x;
+          const dym = mouse.y - a.y;
+          const distMouse = Math.sqrt(dxm * dxm + dym * dym);
+          if (distMouse < 140) {
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distMouse / 140})`;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Gentle push away
+            a.x -= (dxm / distMouse) * 0.4;
+            a.y -= (dym / distMouse) * 0.4;
+          }
+        }
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxDistance) {
+            const alpha = 1 - dist / maxDistance;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(129, 140, 248, ${alpha * 0.35})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+
+        // Draw node
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
+        ctx.fillStyle = a.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = a.color;
+        ctx.fill();
+      }
+    }
+
+    // =========================================================
+    // 3. 3D CYBER HORIZON GRID (Option 3)
+    // =========================================================
+    let gridOffset = 0;
+    let dataSparks = [];
+    function initCyberGrid() {
+      dataSparks = [];
+      for (let i = 0; i < 30; i++) {
+        dataSparks.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          speed: Math.random() * 2 + 1,
+          length: Math.random() * 25 + 10,
+          color: Math.random() > 0.5 ? "#00F0FF" : "#818CF8",
+        });
+      }
+    }
+
+    function drawCyberGrid() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Deep Navy Horizon Background
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+      bgGrad.addColorStop(0, "#101018");
+      bgGrad.addColorStop(0.4, "#1C1C28");
+      bgGrad.addColorStop(1, "#101018");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      const horizonY = height * 0.35;
+      const vanishingX = width * 0.5;
+
+      // Draw perspective vanishing lines
+      ctx.strokeStyle = "rgba(129, 140, 248, 0.15)";
+      ctx.lineWidth = 1;
+      const step = 60;
+      for (let x = -width; x < width * 2; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(vanishingX, horizonY);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+
+      // Draw moving horizontal depth lines
+      gridOffset = (gridOffset + 0.6) % 35;
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.22)";
+      for (let y = horizonY + gridOffset; y < height; y += (y - horizonY) * 0.25 + 10) {
+        const lineAlpha = (y - horizonY) / (height - horizonY);
+        ctx.strokeStyle = `rgba(0, 240, 255, ${lineAlpha * 0.35})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Horizon glow line
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      ctx.lineTo(width, horizonY);
+      ctx.strokeStyle = "#818CF8";
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "#818CF8";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Rising vertical forensic data sparks
+      dataSparks.forEach((s) => {
+        s.y -= s.speed;
+        if (s.y < 0) s.y = height;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x, s.y + s.length);
+        ctx.strokeStyle = s.color;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = s.color;
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.5;
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1.0;
+    }
+
+    // =========================================================
+    // 4. BIOLUMINESCENT DIFFUSION SPLINE WAVES (Option 4)
+    // =========================================================
+    let waveStep = 0;
+    function initWaves() {}
+
+    function drawWaves() {
+      ctx.clearRect(0, 0, width, height);
+
+      const bgGrad = ctx.createRadialGradient(width * 0.5, height * 0.5, 100, width * 0.5, height * 0.5, width * 0.8);
+      bgGrad.addColorStop(0, "#1C1C28");
+      bgGrad.addColorStop(1, "#101018");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      waveStep += 0.012;
+
+      const waveConfigs = [
+        { color: "rgba(0, 240, 255, 0.18)", stroke: "#00F0FF", freq: 0.002, amp: 75, speed: 1.0, yBase: height * 0.45 },
+        { color: "rgba(129, 140, 248, 0.22)", stroke: "#818CF8", freq: 0.0025, amp: 95, speed: 1.4, yBase: height * 0.55 },
+        { color: "rgba(192, 132, 252, 0.18)", stroke: "#C084FC", freq: 0.0018, amp: 85, speed: 0.8, yBase: height * 0.65 },
+      ];
+
+      waveConfigs.forEach((cfg) => {
+        ctx.beginPath();
+        ctx.moveTo(0, height);
+
+        for (let x = 0; x <= width; x += 12) {
+          const y = cfg.yBase + Math.sin(x * cfg.freq + waveStep * cfg.speed) * cfg.amp + Math.cos(x * cfg.freq * 0.5 + waveStep) * (cfg.amp * 0.4);
+          if (x === 0) ctx.lineTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        ctx.lineTo(width, height);
+        ctx.closePath();
+
+        ctx.fillStyle = cfg.color;
+        ctx.fill();
+
+        // Stroke glowing line on crest
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 12) {
+          const y = cfg.yBase + Math.sin(x * cfg.freq + waveStep * cfg.speed) * cfg.amp + Math.cos(x * cfg.freq * 0.5 + waveStep) * (cfg.amp * 0.4);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = cfg.stroke;
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = cfg.stroke;
+        ctx.stroke();
+      });
+    }
+
+    // =========================================================
+    // 5. SONAR RADAR TELEMETRY & THREAT OUTBREAK (Option 5)
+    // =========================================================
+    let radarAngle = 0;
+    let threatBlips = [];
+    function initRadar() {
+      threatBlips = [];
+      const cx = width / 2;
+      const cy = height / 2;
+      for (let i = 0; i < 9; i++) {
+        const r = Math.random() * Math.min(width, height) * 0.4 + 40;
+        const angle = Math.random() * Math.PI * 2;
+        threatBlips.push({
+          x: cx + Math.cos(angle) * r,
+          y: cy + Math.sin(angle) * r,
+          angle: angle,
+          r: r,
+          intensity: 0,
+          label: `NODE #0${i + 1} (${Math.round(Math.random() * 80 + 20)}% HYPE)`,
+          color: i % 2 === 0 ? "#F59E0B" : "#00F0FF"
+        });
+      }
+    }
+
+    function drawRadar() {
+      ctx.clearRect(0, 0, width, height);
+
+      const cx = width / 2;
+      const cy = height / 2;
+      const maxR = Math.min(width, height) * 0.42;
+
+      radarAngle += 0.02;
+      if (radarAngle > Math.PI * 2) radarAngle = 0;
+
+      // Concentric rings
+      ctx.strokeStyle = "rgba(45, 45, 63, 0.7)";
+      ctx.lineWidth = 1;
+      for (let r = maxR / 4; r <= maxR; r += maxR / 4) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Crosshairs
+      ctx.beginPath();
+      ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy);
+      ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR);
+      ctx.strokeStyle = "rgba(129, 140, 248, 0.2)";
+      ctx.stroke();
+
+      // Rotating sweep cone
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(radarAngle);
+
+      const sweepGrad = ctx.createLinearGradient(0, 0, maxR, maxR * 0.5);
+      sweepGrad.addColorStop(0, "rgba(0, 240, 255, 0.35)");
+      sweepGrad.addColorStop(1, "rgba(0, 240, 255, 0.0)");
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, maxR, 0, -0.45, true);
+      ctx.closePath();
+      ctx.fillStyle = sweepGrad;
+      ctx.fill();
+
+      // Main sweep line
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(maxR, 0);
+      ctx.strokeStyle = "#00F0FF";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#00F0FF";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // Threat Blips detection & decay
+      threatBlips.forEach((blip) => {
+        const diff = Math.abs((radarAngle % (Math.PI * 2)) - (blip.angle % (Math.PI * 2)));
+        if (diff < 0.06 || Math.abs(diff - Math.PI * 2) < 0.06) {
+          blip.intensity = 1.0;
+        } else {
+          blip.intensity = Math.max(blip.intensity - 0.008, 0);
+        }
+
+        if (blip.intensity > 0.02) {
+          ctx.beginPath();
+          ctx.arc(blip.x, blip.y, 4 + blip.intensity * 4, 0, Math.PI * 2);
+          ctx.fillStyle = blip.color;
+          ctx.shadowBlur = 14 * blip.intensity;
+          ctx.shadowColor = blip.color;
+          ctx.globalAlpha = blip.intensity;
+          ctx.fill();
+
+          // Expanding wave ring
+          ctx.beginPath();
+          ctx.arc(blip.x, blip.y, (1 - blip.intensity) * 35 + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = blip.color;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Label
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "9px 'JetBrains Mono'";
+          ctx.fillText(blip.label, blip.x + 10, blip.y + 3);
+          ctx.globalAlpha = 1.0;
+        }
+      });
+    }
+
+    // =========================================================
+    // MAIN LOOP CONTROLLER
+    // =========================================================
+    function animate() {
+      switch (currentMode) {
+        case "jellyfish":
+          drawJellyfish();
+          break;
+        case "constellation":
+          drawConstellation();
+          break;
+        case "cybergrid":
+          drawCyberGrid();
+          break;
+        case "waves":
+          drawWaves();
+          break;
+        case "radar":
+          drawRadar();
+          break;
+      }
+      animId = requestAnimationFrame(animate);
+    }
+
+    function initCurrentBackground() {
+      if (currentMode === "jellyfish") initJellyfish();
+      else if (currentMode === "constellation") initConstellation();
+      else if (currentMode === "cybergrid") initCyberGrid();
+      else if (currentMode === "waves") initWaves();
+      else if (currentMode === "radar") initRadar();
+    }
+
+    // Switcher function called by header buttons
+    const descriptions = {
+      jellyfish: "Oceanic Bioluminescence: Real moving deep-sea jellyfish video with floating radiant spores.",
+      constellation: "Neural Threat Graph: Interactive interconnected node network that reacts & draws filaments to your cursor.",
+      cybergrid: "3D Cyber Horizon: Infinite receding cybernetic perspective grid with upward streaming data sparks.",
+      waves: "Diffusion Spline Waves: Fluid sinusoidal multi-frequency ribbons matching your velocity curves.",
+      radar: "Sonar Telemetry Radar: Sweeping directional radar tracking active viral misinformation outbreak nodes."
+    };
+
+    const labels = {
+      jellyfish: "Theme 1: Deep Sea Jellyfish & Luminescent Spores",
+      constellation: "Theme 2: Neural Threat Graph & Interactive Constellation",
+      cybergrid: "Theme 3: 3D Cyber Horizon Grid & Data Sparks",
+      waves: "Theme 4: Bioluminescent Diffusion Spline Waves",
+      radar: "Theme 5: Sonar Radar & Global Outbreak Telemetry"
+    };
+
+    function switchBg(mode) {
+      currentMode = mode;
+
+      // Update button active states
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("tab-active"));
+      document.getElementById(`btn-${mode}`).classList.add("tab-active");
+
+      // Update labels
+      document.getElementById("active-bg-label").textContent = labels[mode];
+      document.getElementById("bg-description").textContent = descriptions[mode];
+
+      // Handle video visibility
+      if (mode === "jellyfish") {
+        video.classList.remove("hidden");
+        videoOverlay.classList.remove("hidden");
+        video.play().catch(() => {});
+      } else {
+        video.classList.add("hidden");
+        videoOverlay.classList.add("hidden");
+        video.pause();
+      }
+
+      initCurrentBackground();
+    }
+
+    // Toggle mock website overlay
+    let isUIVisible = true;
+    function toggleMockUI() {
+      isUIVisible = !isUIVisible;
+      const ui = document.getElementById("mock-website-ui");
+      const text = document.getElementById("ui-btn-text");
+      const icon = document.getElementById("ui-eye-icon");
+
+      if (isUIVisible) {
+        ui.style.opacity = "1";
+        ui.style.pointerEvents = "auto";
+        text.textContent = "Hide Website Overlay";
+        icon.textContent = "👁️";
+      } else {
+        ui.style.opacity = "0";
+        ui.style.pointerEvents = "none";
+        text.textContent = "Show Website Overlay";
+        icon.textContent = "🖼️";
+      }
+    }
+
+    // Initialize default mode
+    initJellyfish();
+    animate();
+    video.classList.remove("hidden");
+    videoOverlay.classList.remove("hidden");
+    video.play().catch(() => {});
+  </script>
+</body>
+</html>
