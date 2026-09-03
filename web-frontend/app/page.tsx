@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Search, Download, FileText, UploadCloud, Loader2, Activity, GitBranch, PieChart, Printer, Zap, ShieldCheck } from "lucide-react";
+import { AlertCircle, Search, Download, FileText, UploadCloud, Loader2, Activity, GitBranch, PieChart, Printer, Zap, ShieldCheck, ArrowDown, ArrowUp } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 export default function Dashboard() {
@@ -88,8 +88,13 @@ export default function Dashboard() {
 
           // Smooth scroll down to highlight telemetry
           setTimeout(() => {
-            window.scrollBy({ top: 480, behavior: "smooth" });
-          }, 500);
+            const el = document.getElementById("telemetry-section");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            } else {
+              window.scrollBy({ top: 500, behavior: "smooth" });
+            }
+          }, 600);
         } else if (data.status === "FAILURE") {
           clearInterval(pollInterval);
           setErrorMessage(data.error || "Verification pipeline failed on backend.");
@@ -206,400 +211,421 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 max-w-[1440px] mx-auto grid gap-6 md:grid-cols-12 relative">
-      {/* Header */}
-      <div className="md:col-span-12 flex justify-between items-center mb-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Threat Intelligence & Narrative Analytics</h2>
-          <p className="text-muted-foreground">Empirical Claim Verification, Real-Time Diffusion Modeling & OSINT Forensics</p>
-        </div>
-        <UserButton />
-      </div>
-
-      {/* LEFT PANE: Input Section */}
-      <div className="md:col-span-5 space-y-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Submit Claim for Telemetry</CardTitle>
-            <CardDescription>Enter suspicious tweet, viral headline, or upload a screenshot.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex space-x-2 bg-slate-100 p-1 rounded-md">
-              <Button
-                variant={inputMode === "text" ? "default" : "ghost"}
-                className="w-1/2"
-                onClick={() => setInputMode("text")}
-              >
-                Direct Text
-              </Button>
-              <Button
-                variant={inputMode === "image" ? "default" : "ghost"}
-                className="w-1/2"
-                onClick={() => setInputMode("image")}
-              >
-                Screenshot OCR
-              </Button>
+    <div className="w-full h-screen overflow-y-auto snap-y snap-mandatory scroll-smooth bg-slate-50">
+      {/* ========================================================= */}
+      {/* SECTION 1: VERIFICATION & AUDIT (FITS EXACTLY IN 100VH)   */}
+      {/* ========================================================= */}
+      <section id="audit-section" className="h-screen max-h-screen w-full snap-start flex flex-col p-4 md:p-6 max-w-[1440px] mx-auto overflow-hidden box-border">
+        {/* Header */}
+        <div className="flex-shrink-0 flex justify-between items-center pb-3 mb-2 border-b border-slate-200/70">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-900">
+                Threat Intelligence &amp; Narrative Analytics
+              </h2>
             </div>
-            {inputMode === "image" && (
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                <Input type="file" accept=".jpg,.jpeg,.png" className="w-full" onChange={handleImageUpload} />
-              </div>
+            <p className="text-xs md:text-sm text-slate-500">
+              Empirical Claim Verification, Real-Time Diffusion Modeling &amp; OSINT Forensics
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {analysisData && telemetry && (
+              <a
+                href="#telemetry-section"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-full transition-all shadow-sm"
+              >
+                <span>Spread Telemetry</span>
+                <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
+              </a>
             )}
-            <Textarea
-              placeholder="Paste viral claim, breaking news statement, or social media post..."
-              value={claim}
-              onChange={(e) => setClaim(e.target.value)}
-              className="min-h-[220px]"
-              disabled={isLoading}
-            />
-          </CardContent>
-          <CardFooter>
-            <Button
-              className="w-full"
-              onClick={handleVerify}
-              disabled={!claim.trim() || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing Real-World Dynamics...
-                </>
-              ) : (
-                <>
-                  Verify Fact & Track Spread <Search className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {isLoading && (
-          <Card className="border-blue-200 bg-blue-50/50 shadow-sm animate-pulse">
-            <CardContent className="pt-6 space-y-2">
-              <div className="flex justify-between text-xs font-semibold text-blue-900 uppercase">
-                <span>{progressStep}</span>
-                <span>{progressPercent}%</span>
-              </div>
-              <div className="w-full bg-blue-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {errorMessage && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{errorMessage}</span>
+            <UserButton />
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* RIGHT PANE: Results & Evidence Breakdown */}
-      <div className="md:col-span-7 space-y-6">
-        {!analysisData && !isLoading && (
-          <div className="h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground p-12 min-h-[420px]">
-            <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
-            <p className="text-center">Submit a claim to initiate multi-source verification and generate its unique lexical velocity curve.</p>
-          </div>
-        )}
-
-        {analysisData && (
-          <>
-            {/* Verdict Dossier Card */}
-            <Card className={`border-2 shadow-xl ${getVerdictCardBorder(analysisData.verdict)}`}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest">
-                      AUTHENTICATION VERDICT
-                    </CardTitle>
-                    <h3 className="text-3xl font-extrabold mt-1 tracking-tight">{analysisData.verdict}</h3>
-                  </div>
-                  <div className="text-right">
-                    <CardTitle className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest">
-                      CONFIDENCE
-                    </CardTitle>
-                    <h3 className="text-3xl font-extrabold mt-1 font-mono">
-                      {Math.round(
-                        (typeof analysisData.confidence === "number" && analysisData.confidence <= 1
-                          ? analysisData.confidence * 100
-                          : analysisData.confidence) || 0
-                      )}%
-                    </h3>
-                  </div>
-                </div>
+        {/* 2-Column Main Workspace: flex-1 min-h-0 guarantees fit in remaining viewport height */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+          {/* LEFT COLUMN: Input Section (col-span-5) */}
+          <div className="lg:col-span-5 flex flex-col h-full overflow-hidden">
+            <Card className="h-full flex flex-col shadow-sm border-slate-200 overflow-hidden">
+              <CardHeader className="py-3 px-4 flex-shrink-0">
+                <CardTitle className="text-sm md:text-base">Submit Claim for Telemetry</CardTitle>
+                <CardDescription className="text-xs">Enter suspicious tweet, viral headline, or upload a screenshot.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-inner">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheck className="h-5 w-5 text-blue-600" />
-                    <h4 className="text-xs font-bold uppercase text-slate-700 font-mono tracking-wide">
-                      Comprehensive Forensic Rationale & LLM Breakdown
-                    </h4>
-                  </div>
-                  <p className="text-[14px] text-slate-800 leading-relaxed whitespace-pre-line font-normal">
-                    {analysisData.reason || "Forensic evaluation synthesized against open-source registries."}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Verified Sources & Intelligence Dossiers */}
-            <Card className="shadow-md">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold">Verified OSINT Evidence Records</CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => downloadReport("json")}>
-                    <FileText className="mr-1.5 h-3.5 w-3.5" /> JSON
+              <CardContent className="flex-1 min-h-0 flex flex-col px-4 py-2 space-y-2.5 overflow-hidden">
+                <div className="flex space-x-1.5 bg-slate-100 p-1 rounded-md flex-shrink-0">
+                  <Button
+                    variant={inputMode === "text" ? "default" : "ghost"}
+                    size="sm"
+                    className="w-1/2 text-xs py-1 h-8"
+                    onClick={() => setInputMode("text")}
+                  >
+                    Direct Text
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => downloadReport("md")}>
-                    <Download className="mr-1.5 h-3.5 w-3.5" /> Markdown
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => downloadReport("pdf")}>
-                    <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
+                  <Button
+                    variant={inputMode === "image" ? "default" : "ghost"}
+                    size="sm"
+                    className="w-1/2 text-xs py-1 h-8"
+                    onClick={() => setInputMode("image")}
+                  >
+                    Screenshot OCR
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3 max-h-[380px] overflow-y-auto pr-2">
-                {Array.isArray(analysisData.evidence) && analysisData.evidence.length > 0 ? (
-                  analysisData.evidence.map((item: any, idx: number) => (
-                    <div key={idx} className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5 shadow-sm hover:shadow-md transition-all">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold bg-slate-200 text-slate-800 px-2.5 py-0.5 rounded">
-                          {item.source || "OSINT Registry"}
-                        </span>
-                        {item.tier_name && (
-                          <span className="text-xs font-medium text-slate-500 font-mono">Tier: {item.tier_name}</span>
-                        )}
-                      </div>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-blue-700 hover:text-blue-500 hover:underline block text-sm pt-0.5"
-                      >
-                        {item.title || "Corroborated Document"}
-                      </a>
-                      <p className="text-xs text-slate-700 leading-relaxed">
-                        {item.snippet}
-                      </p>
+
+                {inputMode === "image" && (
+                  <div className="border-2 border-dashed rounded-lg p-2.5 text-center flex-shrink-0 bg-slate-50/50">
+                    <UploadCloud className="mx-auto h-5 w-5 text-muted-foreground mb-1" />
+                    <Input type="file" accept=".jpg,.jpeg,.png" className="w-full text-xs h-8" onChange={handleImageUpload} />
+                  </div>
+                )}
+
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <Textarea
+                    placeholder="Paste viral claim, breaking news statement, or social media post..."
+                    value={claim}
+                    onChange={(e) => setClaim(e.target.value)}
+                    className="w-full flex-1 min-h-[90px] text-xs p-3 resize-none bg-slate-50 border-slate-200"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {isLoading && (
+                  <div className="border border-blue-200 bg-blue-50/70 p-2.5 rounded-lg space-y-1.5 flex-shrink-0">
+                    <div className="flex justify-between text-[11px] font-semibold text-blue-900 uppercase">
+                      <span>{progressStep}</span>
+                      <span>{progressPercent}%</span>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">No third-party registry records flagged for this narrative vector.</p>
+                    <div className="w-full bg-blue-200 rounded-full h-1.5">
+                      <div
+                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {errorMessage && (
+                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 flex items-center gap-2 flex-shrink-0">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
                 )}
               </CardContent>
+
+              <CardFooter className="py-2.5 px-4 flex-shrink-0 border-t border-slate-100 bg-slate-50/50">
+                <Button
+                  className="w-full text-xs h-9 bg-slate-900 hover:bg-slate-800"
+                  onClick={handleVerify}
+                  disabled={!claim.trim() || isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Analyzing Real-World Dynamics...
+                    </>
+                  ) : (
+                    <>
+                      Verify Fact &amp; Track Spread <Search className="ml-2 h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
             </Card>
-          </>
-        )}
-      </div>
+          </div>
 
-      {/* FULL-SCREEN LOWER CINEMATIC TELEMETRY */}
-      {analysisData && telemetry && (
-        <div className="md:col-span-12 mt-32 min-h-screen flex flex-col justify-center animate-in fade-in slide-in-from-bottom-12 duration-1000 pb-16">
-          <Card className="bg-[#0B1120] text-white border-slate-800 shadow-2xl overflow-hidden h-full min-h-[660px] flex flex-col">
-            <CardHeader className="pb-4 border-b border-slate-800/50 bg-slate-900/20">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-2xl text-slate-100 flex items-center gap-2">
-                    <Zap className="h-6 w-6 text-cyan-400" /> Narrative Analytics & Spread Telemetry
-                  </CardTitle>
-                  <CardDescription className="text-slate-400 text-sm mt-1">
-                    Real-time multi-vector diffusion modeling shaped directly by lexical and urgency factors
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs bg-blue-950 text-blue-300 px-4 py-1.5 rounded-full font-mono border border-blue-800 shadow-inner">
-                    Virality Index: {telemetry.risk}/100
-                  </span>
-                </div>
-              </div>
+          {/* RIGHT COLUMN: Results & Evidence Breakdown (col-span-7) */}
+          <div className="lg:col-span-7 flex flex-col h-full overflow-hidden">
+            {!analysisData && !isLoading && (
+              <Card className="h-full border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground p-8">
+                <AlertCircle className="h-10 w-10 mb-3 opacity-30 text-slate-400" />
+                <p className="text-center text-xs max-w-sm">
+                  Submit a claim to initiate multi-source verification and generate its real-time diffusion velocity curve.
+                </p>
+              </Card>
+            )}
 
-              {/* View Selector Tabs */}
-              <div className="flex gap-2 mt-6 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800 max-w-2xl mx-auto">
-                <button
-                  onClick={() => setActiveGraphTab("velocity")}
-                  className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2.5 rounded-lg transition-all ${
-                    activeGraphTab === "velocity" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <Activity className="h-4 w-4" /> Continuous Velocity Curve
-                </button>
-                <button
-                  onClick={() => setActiveGraphTab("spread")}
-                  className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2.5 rounded-lg transition-all ${
-                    activeGraphTab === "spread" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <GitBranch className="h-4 w-4" /> Node Spread Graph
-                </button>
-                <button
-                  onClick={() => setActiveGraphTab("sources")}
-                  className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2.5 rounded-lg transition-all ${
-                    activeGraphTab === "sources" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
-                  <PieChart className="h-4 w-4" /> Domain Distribution
-                </button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="flex-1 flex flex-col justify-center items-center p-8 relative">
-              {/* TAB 1: REAL-WORLD LEXICAL CONTINUOUS LINE GRAPH */}
-              {activeGraphTab === "velocity" && (
-                <div className="w-full max-w-5xl space-y-6 animate-fadeIn relative">
-                  <div className="flex justify-between text-xs text-slate-300 px-6 py-3.5 font-mono bg-slate-900/80 rounded-lg border border-slate-800 shadow-xl">
-                    <span>🚀 Peak Hype: <strong className="text-cyan-400">{telemetry.peakHour}</strong></span>
-                    <span>⚡ Viral Spike Speed: <strong className="text-amber-400">{telemetry.spikeSpeed}</strong></span>
-                    <span>⏱️ Cooldown Time: <strong className="text-purple-400">{telemetry.cooldown}</strong></span>
-                  </div>
-
-                  {/* SVG Dynamic Line Graph */}
-                  <div className="w-full relative mt-10 h-[300px]">
-                    <svg viewBox="0 0 800 200" className="w-full h-full overflow-visible drop-shadow-2xl">
-                      <defs>
-                        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#3b82f6" />
-                          <stop offset="50%" stopColor="#06b6d4" />
-                          <stop offset="100%" stopColor="#8b5cf6" />
-                        </linearGradient>
-                        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
-                        </linearGradient>
-                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                          <feGaussianBlur stdDeviation="3.5" result="blur" />
-                          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                        </filter>
-                      </defs>
-
-                      {/* Dynamic Area Fill */}
-                      <path
-                        d={`${generateCurvePath(telemetry.curveData)} L 800,200 L 0,200 Z`}
-                        fill="url(#fillGrad)"
-                      />
-
-                      {/* Continuous Curved Line with Glow Filter */}
-                      <path
-                        d={generateCurvePath(telemetry.curveData)}
-                        fill="none"
-                        stroke="url(#lineGrad)"
-                        strokeWidth="3.5"
-                        filter="url(#glow)"
-                        strokeLinecap="round"
-                        className="stroke-dash-animate"
-                        style={{
-                          strokeDasharray: 2200,
-                          strokeDashoffset: 0,
-                          animation: "draw 1.8s ease-out forwards"
-                        }}
-                      />
-
-                      {/* Hourly Points with Hover Tooltips */}
-                      {telemetry.curveData.map((val, i) => {
-                        const cx = (i / (telemetry.curveData.length - 1)) * 800;
-                        const maxVal = Math.max(...telemetry.curveData, 1);
-                        const cy = 150 - (val / maxVal) * 120;
-                        return (
-                          <g key={i} className="cursor-pointer group" onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)}>
-                            <circle cx={cx} cy={cy} r="22" fill="transparent" />
-                            <circle
-                              cx={cx}
-                              cy={cy}
-                              r={hoveredPoint === i ? "6.5" : "4"}
-                              fill={hoveredPoint === i ? "#ffffff" : "#06b6d4"}
-                              stroke="#0f172a"
-                              strokeWidth="2"
-                              className="transition-all duration-150"
-                            />
-
-                            {hoveredPoint === i && (
-                              <g transform={`translate(${cx}, ${cy - 28})`}>
-                                <rect x="-42" y="-20" width="84" height="25" rx="5" fill="#1e293b" stroke="#334155" />
-                                <text x="0" y="-3" textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                                  {(i * 2).toString().padStart(2, '0')}:00 - {val}%
-                                </text>
-                              </g>
-                            )}
-
-                            <text x={cx} y="185" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace">
-                              {(i * 2).toString().padStart(2, '0')}:00
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: NODE SPREAD GRAPH */}
-              {activeGraphTab === "spread" && (
-                <div className="w-full max-w-4xl space-y-6 animate-fadeIn flex flex-col items-center">
-                  <p className="text-xs text-blue-400 font-mono tracking-wider text-center uppercase">
-                    Cross-Platform Entity Diffusion Mapping
-                  </p>
-                  <div className="relative w-full h-[240px] flex justify-center items-center gap-6 py-6">
-                    <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-slate-800 -z-10" />
-                    {telemetry.sources.slice(0, 3).map((src: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-6">
-                        <div className={`px-5 py-3.5 border-2 rounded-xl text-xs font-mono shadow-lg hover:scale-105 transition-transform cursor-pointer ${
-                          idx === 1
-                            ? 'bg-blue-950 border-blue-500 text-white animate-pulse shadow-blue-900/50'
-                            : 'bg-slate-900 border-slate-700 text-amber-400 animate-float'
-                        }`}>
-                          {idx === 1 ? "Core Narrative Target" : src.source || "OSINT Registry"}
-                        </div>
-                        {idx < Math.min(2, telemetry.sources.length - 1) && (
-                          <span className="text-slate-600 font-bold animate-pulse text-xl">── ⚡ ──</span>
-                        )}
+            {analysisData && (
+              <div className="h-full flex flex-col gap-3 overflow-hidden">
+                {/* Verdict Card (compact flex-shrink-0) */}
+                <Card className={`flex-shrink-0 border-2 shadow-sm ${getVerdictCardBorder(analysisData.verdict)}`}>
+                  <CardHeader className="py-2.5 px-4 pb-1">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
+                          AUTHENTICATION VERDICT
+                        </CardTitle>
+                        <h3 className="text-xl md:text-2xl font-extrabold tracking-tight mt-0.5">{analysisData.verdict}</h3>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400 text-center max-w-xl">
-                    Dynamic influence graph mapping provenance pathways between initial social ingestion and corroborated authoritative registers.
-                  </p>
-                </div>
-              )}
+                      <div className="text-right">
+                        <CardTitle className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest">
+                          CONFIDENCE
+                        </CardTitle>
+                        <h3 className="text-xl md:text-2xl font-extrabold font-mono mt-0.5">
+                          {Math.round(
+                            (typeof analysisData.confidence === "number" && analysisData.confidence <= 1
+                              ? analysisData.confidence * 100
+                              : analysisData.confidence) || 0
+                          )}%
+                        </h3>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 py-2">
+                    <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-100">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <ShieldCheck className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <h4 className="text-[10px] font-bold uppercase text-blue-800 font-mono tracking-wide">
+                          Comprehensive Forensic Rationale &amp; LLM Breakdown
+                        </h4>
+                      </div>
+                      <p className="text-[11px] md:text-xs text-slate-700 leading-relaxed font-normal max-h-[85px] overflow-y-auto pr-1">
+                        {analysisData.reason || "Forensic evaluation synthesized against open-source registries."}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* TAB 3: DOMAIN STANCE DISTRIBUTION */}
-              {activeGraphTab === "sources" && (
-                <div className="w-full max-w-2xl space-y-6 animate-fadeIn py-6">
-                  <p className="text-xs text-cyan-400 font-mono tracking-wider text-center uppercase mb-8">
-                    OSINT Source Reliability & Trust Weighting
-                  </p>
-                  <div className="space-y-6 text-left">
+                {/* Verified OSINT Evidence Card: Internal scroll container */}
+                <Card className="flex-1 min-h-0 flex flex-col shadow-sm border-slate-200 overflow-hidden">
+                  <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b border-slate-100 flex-shrink-0">
+                    <CardTitle className="text-xs md:text-sm font-bold text-slate-900">Verified OSINT Evidence Records</CardTitle>
+                    <div className="flex gap-1.5">
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={() => downloadReport("json")}>
+                        <FileText className="mr-1 h-3 w-3" /> JSON
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={() => downloadReport("md")}>
+                        <Download className="mr-1 h-3 w-3" /> Markdown
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={() => downloadReport("pdf")}>
+                        <Printer className="mr-1 h-3 w-3" /> Print
+                      </Button>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2 pr-2">
+                    {Array.isArray(analysisData.evidence) && analysisData.evidence.length > 0 ? (
+                      analysisData.evidence.map((item: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1 hover:border-slate-300 transition-all">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded">
+                              {item.source || "OSINT Registry"}
+                            </span>
+                            {item.tier_name && (
+                              <span className="text-[10px] font-medium text-slate-500 font-mono">Tier: {item.tier_name}</span>
+                            )}
+                          </div>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-blue-700 hover:text-blue-500 hover:underline block text-xs"
+                          >
+                            {item.title || "Corroborated Document"}
+                          </a>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">
+                            {item.snippet}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground p-3">No third-party registry records flagged for this narrative vector.</p>
+                    )}
+                  </CardContent>
+
+                  {/* Jump down hint */}
+                  <div className="py-1.5 px-4 text-center border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
+                    <a
+                      href="#telemetry-section"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 hover:text-cyan-700 transition-colors"
+                    >
+                      <span>Scroll down for diffusion telemetry &amp; velocity curves</span>
+                      <ArrowDown className="w-3 h-3 animate-bounce text-cyan-600" />
+                    </a>
+                  </div>
+                </Card>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================= */}
+      {/* SECTION 2: DARK CYBER SPREAD TELEMETRY (SNAP ON SCROLL)   */}
+      {/* ========================================================= */}
+      {analysisData && telemetry && (
+        <section id="telemetry-section" className="min-h-screen w-full snap-start bg-[#080C14] text-white p-4 md:p-8 lg:p-12 flex flex-col justify-center relative overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-cyan-600/10 blur-[120px] rounded-full pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto w-full relative z-10">
+            <Card className="bg-[#0B1120]/90 border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md">
+              <CardHeader className="pb-4 border-b border-slate-800/60 bg-slate-900/30">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl md:text-2xl text-slate-100 flex items-center gap-2">
+                      <Zap className="h-6 w-6 text-cyan-400" /> Narrative Analytics &amp; Spread Telemetry
+                    </CardTitle>
+                    <CardDescription className="text-slate-400 text-xs md:text-sm mt-1">
+                      Real-time multi-vector diffusion modeling shaped directly by lexical and urgency factors
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <a href="#audit-section" className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-full text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                      <ArrowUp className="w-3 h-3" /> Back to Audit
+                    </a>
+                    <span className="text-xs bg-cyan-950/60 text-cyan-300 px-4 py-1.5 rounded-full font-mono border border-cyan-800 shadow-inner">
+                      Virality Index: {telemetry.risk}/100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sub-Tabs */}
+                <div className="flex gap-2 mt-6 bg-slate-900/80 p-1 rounded-xl border border-slate-800 max-w-2xl mx-auto">
+                  <button
+                    onClick={() => setActiveGraphTab("velocity")}
+                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-lg transition-all ${
+                      activeGraphTab === "velocity" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Activity className="h-3.5 w-3.5" /> Continuous Velocity Curve
+                  </button>
+                  <button
+                    onClick={() => setActiveGraphTab("spread")}
+                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-lg transition-all ${
+                      activeGraphTab === "spread" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <GitBranch className="h-3.5 w-3.5" /> Node Spread Graph
+                  </button>
+                  <button
+                    onClick={() => setActiveGraphTab("sources")}
+                    className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-lg transition-all ${
+                      activeGraphTab === "sources" ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <PieChart className="h-3.5 w-3.5" /> Domain Distribution
+                  </button>
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex-1 flex flex-col justify-center items-center p-6 md:p-8 relative">
+                {/* TAB 1: Real-World Lexical Continuous Line Graph */}
+                {activeGraphTab === "velocity" && (
+                  <div className="w-full max-w-5xl space-y-6">
+                    <div className="flex justify-between text-xs text-slate-300 px-6 py-3 font-mono bg-slate-900/90 rounded-xl border border-slate-800 shadow-inner">
+                      <span>🚀 Peak Hype: <strong className="text-cyan-400">{telemetry.peakHour}</strong></span>
+                      <span>⚡ Viral Spike Speed: <strong className="text-amber-400">{telemetry.spikeSpeed}</strong></span>
+                      <span>⏱️ Cooldown Time: <strong className="text-purple-400">{telemetry.cooldown}</strong></span>
+                    </div>
+
+                    <div className="w-full relative mt-6 h-[260px]">
+                      <svg viewBox="0 0 800 200" className="w-full h-full overflow-visible">
+                        <defs>
+                          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#00F0FF" />
+                            <stop offset="50%" stopColor="#38BDF8" />
+                            <stop offset="100%" stopColor="#A855F7" />
+                          </linearGradient>
+                          <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#080C14" stopOpacity="0.0" />
+                          </linearGradient>
+                          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                          </filter>
+                        </defs>
+
+                        <path d={`${generateCurvePath(telemetry.curveData)} L 800,200 L 0,200 Z`} fill="url(#fillGrad)" />
+                        <path
+                          d={generateCurvePath(telemetry.curveData)}
+                          fill="none"
+                          stroke="url(#lineGrad)"
+                          strokeWidth="4"
+                          filter="url(#glow)"
+                          strokeLinecap="round"
+                        />
+
+                        {telemetry.curveData.map((val, i) => {
+                          const cx = (i / (telemetry.curveData.length - 1)) * 800;
+                          const maxVal = Math.max(...telemetry.curveData, 1);
+                          const cy = 150 - (val / maxVal) * 120;
+                          return (
+                            <g key={i} className="cursor-pointer group" onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)}>
+                              <circle cx={cx} cy={cy} r="18" fill="transparent" />
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={hoveredPoint === i ? "6" : "4"}
+                                fill={hoveredPoint === i ? "#ffffff" : "#00F0FF"}
+                                stroke="#080C14"
+                                strokeWidth="2"
+                              />
+                              {hoveredPoint === i && (
+                                <g transform={`translate(${cx}, ${cy - 26})`}>
+                                  <rect x="-42" y="-18" width="84" height="22" rx="4" fill="#0E131F" stroke="#00F0FF" />
+                                  <text x="0" y="-3" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                                    {(i * 2).toString().padStart(2, '0')}:00 - {val}%
+                                  </text>
+                                </g>
+                              )}
+                              <text x={cx} y="185" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace">
+                                {(i * 2).toString().padStart(2, '0')}:00
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: Node Spread Graph */}
+                {activeGraphTab === "spread" && (
+                  <div className="w-full max-w-4xl space-y-6 py-6 flex flex-col items-center">
+                    <p className="text-xs text-blue-400 font-mono tracking-wider uppercase">Cross-Platform Entity Diffusion Mapping</p>
+                    <div className="relative w-full h-[180px] flex justify-center items-center gap-6">
+                      {telemetry.sources.slice(0, 3).map((src: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-4">
+                          <div className={`px-5 py-3 border-2 rounded-xl text-xs font-mono shadow-lg ${
+                            idx === 1 ? 'bg-blue-950 border-blue-500 text-white animate-pulse' : 'bg-slate-900 border-slate-700 text-amber-400'
+                          }`}>
+                            {idx === 1 ? "Core Narrative Target" : src.source || "OSINT Registry"}
+                          </div>
+                          {idx < Math.min(2, telemetry.sources.length - 1) && (
+                            <span className="text-slate-600 font-bold text-lg">── ⚡ ──</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: Domain Distribution */}
+                {activeGraphTab === "sources" && (
+                  <div className="w-full max-w-2xl space-y-4 py-6">
+                    <p className="text-xs text-cyan-400 font-mono tracking-wider uppercase text-center mb-6">OSINT Source Reliability &amp; Trust Weighting</p>
                     {telemetry.sources.map((src: any, idx: number) => {
                       const trustPercent = Math.round((src.trust_score || 0.85) * 100);
                       return (
-                        <div key={idx} className="group cursor-pointer">
-                          <div className="flex justify-between text-xs mb-2 font-mono text-slate-300">
-                            <span>{src.source} (Trust Factor: {src.trust_score || 0.85})</span>
+                        <div key={idx}>
+                          <div className="flex justify-between text-xs mb-1 font-mono text-slate-300">
+                            <span>{src.source}</span>
                             <span className={trustPercent > 80 ? "text-emerald-400" : "text-amber-400"}>{trustPercent}%</span>
                           </div>
-                          <div className="w-full bg-slate-900 h-3.5 rounded-full border border-slate-800 overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-700 ${
-                                trustPercent > 80
-                                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-400'
-                                  : 'bg-gradient-to-r from-amber-600 to-amber-400'
-                              }`}
-                              style={{ width: `${trustPercent}%` }}
-                            />
+                          <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500" style={{ width: `${trustPercent}%` }} />
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       )}
     </div>
   );
