@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { ThreeUIBadge, ThreeUIProfileButton } from "@/components/ui/threeui-badge";
 import {
   ArrowRight,
   ShieldCheck,
@@ -25,7 +26,8 @@ import {
   RefreshCw,
   GitBranch,
   Boxes,
-  FileText
+  FileText,
+  History
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -194,7 +196,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#101018] text-slate-100 selection:bg-indigo-500 selection:text-white relative overflow-x-hidden font-sans">
+    <div className="min-h-screen flex flex-col bg-[#101018] text-slate-100 selection:bg-indigo-500 selection:text-white relative overflow-x-hidden font-sans no-scrollbar">
       
       {/* ========================================================= */}
       {/* LIVE NEURAL THREAT GRAPH BACKGROUND CANVAS                */}
@@ -213,62 +215,72 @@ export default function LandingPage() {
       </div>
 
       {/* ========================================================= */}
-      {/* NAVIGATION BAR                                            */}
+      {/* FLOATING CURVED NAVIGATION BAR                            */}
       {/* ========================================================= */}
-      <nav className="relative z-20 w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[#2D2D3F]/80 backdrop-blur-md bg-[#1C1C28]/75">
-        
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-lg font-black tracking-tight text-white block leading-tight">
-              Truth Intelligence
-            </span>
-            <span className="text-[10px] font-mono text-cyan-400 tracking-wider uppercase block">
-              SIH Phase 1 • Forensic Engine
-            </span>
-          </div>
-        </Link>
-
-        {/* Center Nav Links */}
-        <div className="hidden md:flex items-center gap-8 text-xs font-medium text-slate-300">
-          <a href="#features" className="hover:text-white transition-colors">Core Capabilities</a>
-          <a href="#pipeline" className="hover:text-white transition-colors">Architecture Pipeline</a>
-          <a href="#tech-stack" className="hover:text-white transition-colors">Tech Stack</a>
-          <Link href="/dashboard" className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span>Launch Dashboard</span>
+      <div className="relative z-20 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
+        <nav className="w-full px-5 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between rounded-2xl sm:rounded-full border border-[#2D2D3F] backdrop-blur-xl bg-[#1C1C28]/85 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <ThreeUIBadge size="sm" />
+            <div>
+              <span className="text-base sm:text-lg font-black tracking-tight text-white block leading-tight">
+                Truth Intelligence
+              </span>
+              <span className="text-[9px] sm:text-[10px] font-mono text-cyan-400 tracking-wider uppercase block">
+                SIH Phase 1 • Forensic Engine
+              </span>
+            </div>
           </Link>
-        </div>
 
-        {/* Auth & CTA Actions */}
-        <div className="flex items-center gap-3">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <Button variant="ghost" size="sm" className="text-xs text-slate-300 hover:text-white hover:bg-[#252538]">
-                Log in
-              </Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button size="sm" className="text-xs font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white shadow-md shadow-indigo-500/25 border-0">
-                Get Started
-              </Button>
-            </SignUpButton>
-          </Show>
-
-          <Show when="signed-in">
-            <UserButton />
-            <Link href="/dashboard">
-              <Button size="sm" className="text-xs font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-md shadow-indigo-600/30 flex items-center gap-1.5 border-0">
-                <span>Go to Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
+          {/* Center Nav Links */}
+          <div className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-300">
+            <a href="#features" className="hover:text-white transition-colors">Core Capabilities</a>
+            <a href="#pipeline" className="hover:text-white transition-colors">Architecture Pipeline</a>
+            <a href="#tech-stack" className="hover:text-white transition-colors">Tech Stack</a>
+            <Link href="/dashboard" className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span>Launch Dashboard</span>
             </Link>
-          </Show>
-        </div>
-      </nav>
+          </div>
+
+          {/* Auth & CTA Actions */}
+          <div className="flex items-center gap-3">
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <Button variant="ghost" size="sm" className="text-xs text-slate-300 hover:text-white hover:bg-[#252538]">
+                  Log in
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button size="sm" className="text-xs font-semibold bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white shadow-md shadow-indigo-500/25 border-0">
+                  Get Started
+                </Button>
+              </SignUpButton>
+            </Show>
+
+            <Show when="signed-in">
+              <ThreeUIProfileButton>
+                <UserButton>
+                  <UserButton.MenuItems>
+                    <UserButton.Link
+                      label="Verification History"
+                      labelIcon={<History className="w-4 h-4 text-cyan-400" />}
+                      href="/history"
+                    />
+                  </UserButton.MenuItems>
+                </UserButton>
+              </ThreeUIProfileButton>
+              <Link href="/dashboard">
+                <Button size="sm" className="text-xs font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-md shadow-indigo-600/30 flex items-center gap-1.5 border-0 rounded-full px-3.5">
+                  <span>Go to Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </Show>
+          </div>
+        </nav>
+      </div>
 
       {/* ========================================================= */}
       {/* HERO SECTION                                              */}
@@ -593,21 +605,12 @@ export default function LandingPage() {
             <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-xl mx-auto">
               Launch the full Threat Intelligence &amp; Narrative Analytics terminal to submit claims, view verified OSINT evidence, and explore the diffusion velocity curve.
             </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-6 flex items-center justify-center">
               <Link href="/dashboard">
                 <Button size="lg" className="h-12 px-8 font-bold bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-slate-950 shadow-lg shadow-cyan-500/25 rounded-xl border-0">
                   Launch Threat Intelligence Dashboard →
                 </Button>
               </Link>
-              <a
-                href="https://github.com/Aaditya-coding/SIH-Phase-1"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 h-12 px-6 rounded-xl font-semibold border border-[#2D2D3F] bg-[#141420] hover:bg-[#202030] text-slate-200 transition-all text-sm"
-              >
-                <span>Read Full Documentation</span>
-                <ExternalLink className="w-4 h-4 text-slate-400" />
-              </a>
             </div>
           </div>
         </div>
@@ -620,9 +623,6 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>Truth Intelligence Engine • Smart India Hackathon Phase 1</div>
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-slate-400 hover:text-cyan-400 transition-colors">
-              Threat Intelligence Dashboard
-            </Link>
             <a
               href="https://github.com/Aaditya-coding/SIH-Phase-1"
               target="_blank"
