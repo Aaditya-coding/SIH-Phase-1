@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@designcodeio/threeui": ["./src/shaders/index.ts"],
+      "@designcodeio/threeui/*": ["./src/shaders/*"]
     }
   },
   "include": [

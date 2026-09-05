@@ -1,14 +1,15 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from celery.result import AsyncResult
-from backend.celery_app import celery_app
-from backend.tasks import run_claim_analysis_task
+from backend.celery_app import celery_app, is_celery_available
+from backend.tasks import run_claim_analysis_task, execute_claim_analysis
 import sys
 import os
 import io
-import pytesseract
+import uuid
+import threading
 from PIL import Image
 from dotenv import load_dotenv
 
@@ -25,17 +26,30 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 app = FastAPI(title="Truth Intelligence API", version="1.0")
 
-# Enable CORS for frontend connectivity
+# In-memory task registry for resilient deployment when Celery/Redis is not running
+in_memory_tasks: dict = {}
+
+# Enable CORS for frontend connectivity (supports Vercel, localhost, and custom domains)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local development
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 class ClaimRequest(BaseModel):
     claim: str
+
+@app.get("/")
+def root():
+    """Root health endpoint for Render deployment monitoring."""
+    return {
+        "status": "online",
+        "service": "Truth Intelligence Forensic Engine",
+        "version": "1.0",
+        "endpoints": ["/health", "/analyze", "/task/{task_id}", "/ocr", "/api/generate-pdf"]
+    }
 
 @app.get("/health")
 def health_check():
@@ -45,20 +59,71 @@ class AnalyzeRequest(BaseModel):
     input_type: str = "text"
     content: str
 
+def _run_in_memory_pipeline(task_id: str, content: str):
+    """Executes the analysis in a background thread when Celery is not configured."""
+    def on_progress(step: str, progress: int):
+        if task_id in in_memory_tasks:
+            in_memory_tasks[task_id]["status"] = "PROGRESS"
+            in_memory_tasks[task_id]["step"] = step
+            in_memory_tasks[task_id]["progress"] = progress
+
+    try:
+        result = execute_claim_analysis(content, task_id=task_id, progress_callback=on_progress)
+        in_memory_tasks[task_id] = {
+            "task_id": task_id,
+            "status": "SUCCESS",
+            "progress": 100,
+            "result": result,
+            **result
+        }
+    except Exception as exc:
+        in_memory_tasks[task_id] = {
+            "task_id": task_id,
+            "status": "FAILURE",
+            "error": str(exc),
+            "result": None
+        }
+
 @app.post("/analyze")
-def submit_claim_analysis(request: AnalyzeRequest):
-    """Offloads claim processing to a background Celery worker via Redis."""
-    task = run_claim_analysis_task.delay(request.content)
+def submit_claim_analysis(request: AnalyzeRequest, background_tasks: BackgroundTasks):
+    """
+    Submits claim for analysis.
+    If Celery/Redis is available, offloads to Celery.
+    If Redis/Celery is unavailable (e.g., Render Free tier), runs seamlessly via background thread.
+    """
+    # 1. Try Celery if Redis broker is reachable
+    if is_celery_available():
+        try:
+            task = run_claim_analysis_task.delay(request.content)
+            return {
+                "task_id": task.id,
+                "status": "QUEUED",
+                "message": "Claim analysis successfully enqueued for processing via Celery."
+            }
+        except Exception as e:
+            print(f"Celery dispatch failed ({e}), falling back to background thread.")
+
+    # 2. Resilient In-Memory Fallback
+    task_id = f"task_{uuid.uuid4().hex[:12]}"
+    in_memory_tasks[task_id] = {
+        "task_id": task_id,
+        "status": "PENDING",
+        "step": "Initializing forensic pipeline...",
+        "progress": 5,
+        "result": None
+    }
+    background_tasks.add_task(_run_in_memory_pipeline, task_id, request.content)
     return {
-        "task_id": task.id,
+        "task_id": task_id,
         "status": "QUEUED",
-        "message": "Claim analysis successfully enqueued for processing."
+        "message": "Claim analysis enqueued via background execution worker."
     }
 
 @app.post("/ocr")
 async def extract_text_from_image(file: UploadFile = File(...)):
-    """Extracts text strings from uploaded screenshots or images via Tesseract OCR."""
+    """Extracts text strings from uploaded screenshots or images via Tesseract OCR with graceful fallback."""
     try:
+        import pytesseract
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
         extracted_text = pytesseract.image_to_string(image).strip()
@@ -66,7 +131,12 @@ async def extract_text_from_image(file: UploadFile = File(...)):
             "extracted_text": extracted_text if extracted_text else "No readable text detected in image."
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
+        err_str = str(e)
+        if "tesseract is not installed" in err_str.lower() or "not in your path" in err_str.lower():
+            return {
+                "extracted_text": "Tesseract OCR engine is not installed on this cloud environment. Please paste the claim text directly into the analysis terminal."
+            }
+        raise HTTPException(status_code=500, detail=f"OCR processing failed: {err_str}")
 
 
 def create_pdf(report_data):
@@ -257,39 +327,54 @@ async def generate_pdf_endpoint(report_data: dict):
 
 @app.get("/task/{task_id}")
 async def get_task_status(task_id: str):
-    """Consolidated endpoint that polls the status and handles PENDING, PROGRESS, SUCCESS, and FAILURE states for the frontend UI."""
-    task_result = AsyncResult(task_id, app=celery_app)
-    
-    if task_result.state == 'PENDING':
-        response = {
+    """Consolidated endpoint that polls status, checking both in-memory registry and Celery."""
+    # 1. Check in-memory task registry first
+    if task_id in in_memory_tasks:
+        return in_memory_tasks[task_id]
+
+    # 2. Check Celery task result
+    try:
+        task_result = AsyncResult(task_id, app=celery_app)
+        if task_result.state == 'PENDING':
+            return {
+                "task_id": task_id,
+                "status": "PENDING",
+                "step": "Task initializing in queue...",
+                "progress": 0,
+                "result": None
+            }
+        elif task_result.state == 'PROGRESS':
+            return {
+                "task_id": task_id,
+                "status": "PROGRESS",
+                "step": task_result.info.get("step", "Processing..."),
+                "progress": task_result.info.get("progress", 50),
+                "result": None
+            }
+        elif task_result.state == 'SUCCESS':
+            response = {
+                "task_id": task_id,
+                "status": task_result.state,
+                "progress": 100,
+                "result": task_result.result,
+            }
+            if isinstance(task_result.result, dict):
+                response.update(task_result.result)
+            return response
+        else:
+            return {
+                "task_id": task_id,
+                "status": task_result.state,
+                "error": str(task_result.info),
+            }
+    except Exception as exc:
+        return {
             "task_id": task_id,
-            "status": "PENDING",
-            "step": "Task initializing in queue...",
-            "progress": 0,
-            "result": None
+            "status": "FAILURE",
+            "error": f"Error querying task status: {str(exc)}"
         }
-    elif task_result.state == 'PROGRESS':
-        response = {
-            "task_id": task_id,
-            "status": "PROGRESS",
-            "step": task_result.info.get("step", "Processing..."),
-            "progress": task_result.info.get("progress", 50),
-            "result": None
-        }
-    elif task_result.state == 'SUCCESS':
-        response = {
-            "task_id": task_id,
-            "status": task_result.state,
-            "progress": 100,
-            "result": task_result.result,
-        }
-        if isinstance(task_result.result, dict):
-            response.update(task_result.result)
-    else:
-        response = {
-            "task_id": task_id,
-            "status": task_result.state,
-            "error": str(task_result.info),
-        }
-        
-    return response
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)

@@ -1,10 +1,15 @@
-from transformers import pipeline
+# Lazy-loaded neural machine translation pipeline
+_translator_pipeline = None
 
-# Initialize a lightweight, local neural machine translation pipeline
-try:
-    translator_pipeline = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
-except Exception:
-    translator_pipeline = None
+def get_translator_pipeline():
+    global _translator_pipeline
+    if _translator_pipeline is None:
+        try:
+            from transformers import pipeline
+            _translator_pipeline = pipeline("translation", model="Helsinki-NLP/opus-mt-mul-en")
+        except Exception:
+            _translator_pipeline = False
+    return _translator_pipeline if _translator_pipeline is not False else None
 
 def preprocess_and_translate_claim(claim: str) -> dict:
     """
@@ -27,16 +32,28 @@ def preprocess_and_translate_claim(claim: str) -> dict:
                 "is_translated": False
             }
 
-        if translator_pipeline:
+        pipe = get_translator_pipeline()
+        if pipe:
             # Run local neural translation
-            translated_result = translator_pipeline(claim, max_length=512)
+            translated_result = pipe(claim, max_length=512)
             translated_text = translated_result[0]["translation_text"]
-            
             return {
                 "original_claim": claim,
                 "processed_claim": translated_text,
                 "is_translated": claim.strip().lower() != translated_text.strip().lower()
             }
+
+        # Fast fallback using deep-translator (Google Translate)
+        try:
+            from deep_translator import GoogleTranslator
+            translated_text = GoogleTranslator(source='auto', target='en').translate(claim)
+            return {
+                "original_claim": claim,
+                "processed_claim": translated_text,
+                "is_translated": claim.strip().lower() != translated_text.strip().lower()
+            }
+        except Exception:
+            pass
         
         return {
             "original_claim": claim, 
